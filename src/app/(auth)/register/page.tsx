@@ -6,32 +6,61 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { routeByRole } from "@/lib/roleRouting";
 import { Button } from "@/components/ui/Button";
-import { Input, Label, Select } from "@/components/ui/Input";
+import { Input, Label } from "@/components/ui/Input";
 
 const ROLES = [
-  { value: "CITIZEN", label: "Citizen" },
-  { value: "OPERATOR", label: "Control Room Operator" },
-  { value: "FIELD_TEAM", label: "Field Rescue Team" },
-  { value: "SHELTER_MANAGER", label: "Shelter Manager" },
-];
+  {
+    value: "CITIZEN",
+    icon: "🚨",
+    label: "Citizen",
+    desc: "Report emergencies, track help, find shelters",
+  },
+  {
+    value: "OPERATOR",
+    icon: "🖥️",
+    label: "Control Room Operator",
+    desc: "Triage incidents and dispatch rescue teams",
+  },
+  {
+    value: "FIELD_TEAM",
+    icon: "🚤",
+    label: "Field Rescue Team",
+    desc: "Receive missions and update status on-scene",
+  },
+  {
+    value: "SHELTER_MANAGER",
+    icon: "🏠",
+    label: "Shelter Manager",
+    desc: "Manage occupancy and relief supplies",
+  },
+] as const;
 
 export default function RegisterPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [role, setRole] = useState("CITIZEN");
+  const [role, setRole] = useState<string>("CITIZEN");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    if (password !== confirmPassword) {
+      setError("Passwords don't match");
+      return;
+    }
+
     setLoading(true);
 
     const supabase = createClient();
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -41,100 +70,214 @@ export default function RegisterPage() {
     });
 
     if (error) {
-      setError(error.message);
+      setError(error.message === "Invalid login credentials"
+        ? "Wrong email or password — try again"
+        : error.message);
       setLoading(false);
       return;
     }
+
+    // Project may require email confirmation -> no session yet
+    if (!data.session) {
+      setNeedsConfirmation(true);
+      setLoading(false);
+      return;
+    }
+
     const dest = await routeByRole("/dashboard");
     router.push(dest);
     router.refresh();
   }
 
+  if (needsConfirmation) {
+    return (
+      <main className="flex min-h-screen items-center justify-center px-4">
+        <div className="w-full max-w-sm rounded-2xl border border-[var(--color-border)] bg-white p-8 text-center shadow-sm">
+          <div className="text-4xl">📧</div>
+          <h1 className="mt-3 text-xl font-bold">Check your inbox</h1>
+          <p className="mt-2 text-sm leading-relaxed text-muted">
+            We sent a confirmation link to{" "}
+            <b className="text-foreground">{email}</b>. Click it to activate
+            your account, then log in.
+          </p>
+          <Link
+            href="/login"
+            className="mt-6 inline-flex h-11 w-full items-center justify-center rounded-xl bg-[var(--color-primary)] text-sm font-semibold text-white transition-colors hover:bg-[var(--color-primary-dark)]"
+          >
+            Back to login
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <main className="flex min-h-screen items-center justify-center px-4 py-10">
-      <div className="w-full max-w-sm">
+    <div className="flex min-h-screen flex-col bg-gray-50">
+      {/* Header */}
+      <header className="border-b border-[var(--color-border)] bg-white/85 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
+          <Link href="/" className="flex items-center gap-2">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--color-primary)] text-lg shadow-sm">
+              🛟
+            </span>
+            <span className="text-sm font-bold tracking-tight">RakshaSetu</span>
+          </Link>
+          <Link
+            href="/login"
+            className="rounded-xl px-4 py-2 text-sm font-medium text-muted transition-colors hover:bg-gray-100 hover:text-foreground"
+          >
+            Log in
+          </Link>
+        </div>
+      </header>
+
+      <main className="mx-auto w-full max-w-xl flex-1 px-4 py-10 sm:py-14">
         <div className="mb-8 text-center">
-          <div className="mb-2 text-3xl">🛟</div>
-          <h1 className="text-2xl font-bold">Create account</h1>
+          <h1 className="text-2xl font-bold">Create your account</h1>
           <p className="mt-1 text-sm text-muted">
-            Report emergencies and track responses
+            Pick the role that describes you — it decides your console.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
-          <div>
-            <Label htmlFor="name">Full name</Label>
-            <Input
-              id="name"
-              required
-              placeholder="Your name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
-          <div>
-            <Label htmlFor="phone">Phone (optional)</Label>
-            <Input
-              id="phone"
-              type="tel"
-              placeholder="+91 ..."
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-            />
-          </div>
-          <div>
-            <Label htmlFor="role">I am a</Label>
-            <Select id="role" value={role} onChange={(e) => setRole(e.target.value)}>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Role cards */}
+          <fieldset>
+            <legend className="sr-only">I am registering as</legend>
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
               {ROLES.map((r) => (
-                <option key={r.value} value={r.value}>
-                  {r.label}
-                </option>
+                <label
+                  key={r.value}
+                  className={`cursor-pointer rounded-xl border-2 bg-white p-4 shadow-sm transition-all active:scale-[0.99] ${
+                    role === r.value
+                      ? "border-[var(--color-primary)] ring-1 ring-[var(--color-primary)]"
+                      : "border-transparent hover:border-gray-300"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="role"
+                    value={r.value}
+                    checked={role === r.value}
+                    onChange={() => setRole(r.value)}
+                    className="sr-only"
+                  />
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">{r.icon}</span>
+                    <span>
+                      <span className="block text-sm font-bold">{r.label}</span>
+                      <span className="mt-0.5 block text-xs leading-snug text-muted">
+                        {r.desc}
+                      </span>
+                    </span>
+                  </div>
+                </label>
               ))}
-            </Select>
-          </div>
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              required
-              autoComplete="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-          <div>
-            <Label htmlFor="password">Password (min 6 characters)</Label>
-            <Input
-              id="password"
-              type="password"
-              required
-              minLength={6}
-              autoComplete="new-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
+            </div>
+          </fieldset>
 
-          {error && <p className="text-sm text-[var(--color-primary)]">{error}</p>}
+          <div className="rounded-2xl border border-[var(--color-border)] bg-white p-5 shadow-sm sm:p-6">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="name">Full name</Label>
+                <Input
+                  id="name"
+                  required
+                  autoComplete="name"
+                  placeholder="Your name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="phone">Phone (optional)</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  autoComplete="tel"
+                  placeholder="+91 ..."
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="mt-4">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                required
+                autoComplete="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="password">Password (min 6)</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    minLength={6}
+                    autoComplete="new-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted hover:text-foreground"
+                  >
+                    {showPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="confirm">Confirm password</Label>
+                <Input
+                  id="confirm"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+              </div>
+            </div>
 
-          <Button type="submit" size="lg" disabled={loading} className="w-full">
-            {loading ? "Creating account..." : "Create Account"}
-          </Button>
+            {error && (
+              <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-[var(--color-primary)]">
+                {error}
+              </p>
+            )}
 
-          <p className="text-center text-sm text-muted">
-            Already registered?{" "}
-            <Link href="/login" className="font-medium text-[var(--color-accent)]">
-              Sign in
-            </Link>
-          </p>
+            <Button
+              type="submit"
+              size="lg"
+              disabled={loading}
+              className="mt-5 w-full"
+            >
+              {loading ? "Creating account..." : "Create Account"}
+            </Button>
+          </div>
         </form>
 
-        <p className="mt-4 text-center text-sm text-muted">
-          <Link href="/" className="hover:text-foreground">← Back to home</Link>
+        <p className="mt-6 text-center text-sm text-muted">
+          Already registered?{" "}
+          <Link href="/login" className="font-medium text-[var(--color-accent)]">
+            Sign in
+          </Link>
         </p>
-      </div>
-    </main>
+        <p className="mt-4 text-center text-xs text-muted">
+          Just need to report an emergency?{" "}
+          <Link href="/report" className="font-medium underline">
+            You can do that without an account
+          </Link>
+        </p>
+      </main>
+    </div>
   );
 }

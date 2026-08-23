@@ -1,6 +1,20 @@
 import { createClient, getUserRole } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
+// Like requireAuth but tolerates anonymous visitors and stale
+// sessions - used by public endpoints (e.g. guest incident reports).
+export async function optionalAuth(): Promise<{ userId: string | null }> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    return { userId: user?.id ?? null };
+  } catch {
+    return { userId: null };
+  }
+}
+
 export async function requireAuthority(): Promise<
   { userId: string; role: string } | NextResponse
 > {

@@ -12,6 +12,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -27,7 +28,13 @@ export default function LoginPage() {
     });
 
     if (error) {
-      setError(error.message);
+      setError(
+        error.message.includes("Invalid login credentials")
+          ? "Wrong email or password — please try again"
+          : error.message.includes("Email not confirmed")
+            ? "Your email isn't confirmed yet — check your inbox for the verification link"
+            : error.message
+      );
       setLoading(false);
       return;
     }
@@ -37,21 +44,44 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <div className="mb-2 text-3xl">🛟</div>
-          <h1 className="text-2xl font-bold">RakshaSetu</h1>
-          <p className="mt-1 text-sm text-muted">Authority control room login</p>
+    <div className="flex min-h-screen flex-col bg-gray-50">
+      {/* Header */}
+      <header className="border-b border-[var(--color-border)] bg-white/85 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
+          <Link href="/" className="flex items-center gap-2">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--color-primary)] text-lg shadow-sm">
+              🛟
+            </span>
+            <span className="text-sm font-bold tracking-tight">RakshaSetu</span>
+          </Link>
+          <Link
+            href="/register"
+            className="rounded-xl bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-primary-dark)]"
+          >
+            Register
+          </Link>
+        </div>
+      </header>
+
+      <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-10">
+        <div className="mb-7 text-center">
+          <h1 className="text-2xl font-bold">Welcome back</h1>
+          <p className="mt-1 text-sm text-muted">
+            Log in to your role&apos;s console
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-[var(--color-border)] bg-white p-6 shadow-sm">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4 rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm sm:p-8"
+        >
           <div>
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
               required
+              autoFocus
               autoComplete="email"
               placeholder="you@example.com"
               value={email}
@@ -60,17 +90,31 @@ export default function LoginPage() {
           </div>
           <div>
             <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              required
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                required
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted hover:text-foreground"
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
           </div>
 
-          {error && <p className="text-sm text-[var(--color-primary)]">{error}</p>}
+          {error && (
+            <p className="rounded-lg bg-red-50 p-3 text-sm text-[var(--color-primary)]">
+              {error}
+            </p>
+          )}
 
           <Button type="submit" size="lg" disabled={loading} className="w-full">
             {loading ? "Signing in..." : "Sign In"}
@@ -84,10 +128,13 @@ export default function LoginPage() {
           </p>
         </form>
 
-        <p className="mt-4 text-center text-sm text-muted">
-          <Link href="/" className="hover:text-foreground">← Back to home</Link>
+        <p className="mt-5 text-center text-xs leading-relaxed text-muted">
+          In an emergency and can&apos;t log in?{" "}
+          <Link href="/report" className="font-semibold underline">
+            Report without an account
+          </Link>
         </p>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }

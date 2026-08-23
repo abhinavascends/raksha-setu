@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { jsonError, requireAuth } from "@/lib/auth";
+import { jsonError, optionalAuth, requireAuth } from "@/lib/auth";
 import { classifyReport } from "@/lib/classifier";
 import {
   calculateConfidence,
@@ -54,10 +54,11 @@ const TYPES = [
 ];
 const SOURCES = ["APP", "SMS", "IVR", "OFFICIAL", "MANUAL"];
 
-// POST /api/incidents - citizen/operator/SMS report submission.
+// POST /api/incidents - citizen/operator/SMS/anonymous report submission.
 // Pipeline: validate -> AI classify -> confidence score -> duplicate cluster.
 export async function POST(request: NextRequest) {
-  const auth = await requireAuth();
+  const auth = await optionalAuth();
+  const reporterId = auth.userId;
   if (auth instanceof NextResponse) return auth;
 
   let body: Record<string, unknown>;
@@ -107,13 +108,14 @@ export async function POST(request: NextRequest) {
 
   // ---- Duplicate detection: same type within 500m in last 30 min ----
   const windowStart = new Date(Date.now() - 30 * 60 * 1000).toISOString();
-  const { data: nearby } = await supabase
+  let nearbyQuery = supabase
     .from("incidents")
     .select("id, latitude, longitude, cluster_id, reported_at")
     .eq("type", type)
     .not("status", "in", "(RESOLVED,CANCELLED)")
-    .gte("reported_at", windowStart)
-    .neq("reporter_id", auth.userId);
+    .gte("reported_at", windowStart);
+  if (reporterId) nearbyQuery = nearbyQuery.neq("reporter_id", reporterId);
+  const { data: nearby } = await nearbyQuery;
 
   function distKm(aLat: number, aLng: number) {
     const R = 6371;
@@ -149,7 +151,7 @@ export async function POST(request: NextRequest) {
   const { data: incident, error } = await supabase
     .from("incidents")
     .insert({
-      reporter_id: auth.userId,
+      reporter_id: reporterId,
       description,
       latitude,
       longitude,

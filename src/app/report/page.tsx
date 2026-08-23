@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
@@ -29,6 +29,16 @@ export default function ReportPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [incidentNumber, setIncidentNumber] = useState<string | null>(null);
+  const [signedIn, setSignedIn] = useState(false);
+
+  useEffect(() => {
+    void (async () => {
+      const {
+        data: { user },
+      } = await createClient().auth.getUser();
+      setSignedIn(!!user);
+    })();
+  }, []);
 
   function detectLocation() {
     if (!navigator.geolocation) {
@@ -123,14 +133,33 @@ export default function ReportPage() {
           <div className="mt-1 font-mono text-2xl font-bold">{incidentNumber}</div>
         </div>
         <p className="mt-4 text-sm text-muted">
-          Track its status anytime from your dashboard.
+          {signedIn
+            ? "Track its status anytime from your dashboard."
+            : "Save this number — you reported as a guest, so show it to any responder to check progress."}
         </p>
-        <Link
-          href="/citizen"
-          className="mt-8 inline-flex h-12 w-full max-w-xs items-center justify-center rounded-xl bg-[var(--color-primary)] text-sm font-semibold text-white transition-colors hover:bg-[var(--color-primary-dark)] active:scale-[0.99]"
-        >
-          Go to my dashboard
-        </Link>
+        {signedIn ? (
+          <Link
+            href="/citizen"
+            className="mt-8 inline-flex h-12 w-full max-w-xs items-center justify-center rounded-xl bg-[var(--color-primary)] text-sm font-semibold text-white transition-colors hover:bg-[var(--color-primary-dark)] active:scale-[0.99]"
+          >
+            Go to my dashboard
+          </Link>
+        ) : (
+          <>
+            <Link
+              href="/register"
+              className="mt-8 inline-flex h-12 w-full max-w-xs items-center justify-center rounded-xl bg-[var(--color-primary)] text-sm font-semibold text-white transition-colors hover:bg-[var(--color-primary-dark)] active:scale-[0.99]"
+            >
+              Create an account to track live
+            </Link>
+            <Link
+              href="/"
+              className="mt-3 inline-flex h-11 w-full max-w-xs items-center justify-center rounded-xl border border-[var(--color-border)] bg-white text-sm font-medium hover:bg-gray-50"
+            >
+              Back to home
+            </Link>
+          </>
+        )}
       </main>
     );
   }
@@ -139,7 +168,7 @@ export default function ReportPage() {
   return (
     <main className="mx-auto min-h-screen max-w-md px-4 pb-12 pt-4 sm:px-6 sm:pt-10">
       <header className="sticky top-0 z-20 -mx-4 mb-6 flex items-center gap-3 border-b border-transparent bg-gray-50/85 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
-        <Link href="/citizen" aria-label="Back" className="rounded-lg px-2 py-1 text-xl text-muted transition-colors hover:bg-gray-200/70 hover:text-foreground">
+        <Link href="/" aria-label="Back" className="rounded-lg px-2 py-1 text-xl text-muted transition-colors hover:bg-gray-200/70 hover:text-foreground">
           ←
         </Link>
         <h1 className="text-lg font-bold">Report an Emergency</h1>
