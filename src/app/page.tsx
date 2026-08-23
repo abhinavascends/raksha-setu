@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getSafeUser, getUserRole } from "@/lib/supabase/server";
+import { Logo } from "@/components/ui/Logo";
 
 const ROLE_ROUTES: Record<string, string> = {
   CITIZEN: "/citizen",
@@ -12,32 +13,28 @@ const ROLE_ROUTES: Record<string, string> = {
 const PERSONAS = [
   {
     href: "/report",
-    icon: "🚨",
-    title: "I'm a Resident",
+        title: "I'm a Resident",
     desc: "Report an emergency in under a minute — no account needed. Track help live.",
     cta: "Report now",
     accent: true,
   },
   {
     href: "/dashboard",
-    icon: "🖥️",
-    title: "Control Room",
+        title: "Control Room",
     desc: "Live district map, AI-triaged incidents and one-click optimal team dispatch.",
     cta: "Open console",
     accent: false,
   },
   {
     href: "/team",
-    icon: "🚤",
-    title: "Rescue Team",
+        title: "Rescue Team",
     desc: "Get dispatched instantly, navigate on-scene and update your mission status.",
     cta: "Mission console",
     accent: false,
   },
   {
     href: "/shelter-manage",
-    icon: "🏠",
-    title: "Shelter Manager",
+        title: "Shelter Manager",
     desc: "Keep occupancy and supplies current so routing decisions use real data.",
     cta: "Shelter console",
     accent: false,
@@ -46,23 +43,19 @@ const PERSONAS = [
 
 const STEPS = [
   {
-    icon: "📍",
-    title: "Report",
+        title: "Report",
     text: "Anyone reports via app or SMS with GPS + photo — no signup required.",
   },
   {
-    icon: "🧠",
-    title: "AI Triage",
+        title: "AI Triage",
     text: "Gemini classifies the report; duplicates merge and trust scores rise as neighbors corroborate.",
   },
   {
-    icon: "🎯",
-    title: "Smart Dispatch",
+        title: "Smart Dispatch",
     text: "The allocation engine scores every team on ETA, capability, capacity and availability.",
   },
   {
-    icon: "📡",
-    title: "Live Tracking",
+        title: "Live Tracking",
     text: "Everyone watches the same realtime picture until the incident is resolved.",
   },
 ];
@@ -75,7 +68,7 @@ export default async function Home({
   const { error } = await searchParams;
   const user = await getSafeUser();
   const signedIn = !!user;
-  const role = signedIn ? await getUserRole() : null;
+  const role = signedIn ? await getUserRole(): null;
   const consoleHref = (role && ROLE_ROUTES[role]) || "/login";
 
   return (
@@ -84,9 +77,7 @@ export default async function Home({
       <header className="sticky top-0 z-20 border-b border-[var(--color-border)] bg-white/85 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
           <Link href="/" className="flex items-center gap-2">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--color-primary)] text-lg shadow-sm">
-              🛟
-            </span>
+            <Logo size={36} />
             <span className="text-sm font-bold tracking-tight">RakshaSetu</span>
           </Link>
           {signedIn ? (
@@ -96,7 +87,7 @@ export default async function Home({
             >
               Open my console →
             </Link>
-          ) : (
+          ): (
             <div className="flex items-center gap-2">
               <Link
                 href="/login"
@@ -143,7 +134,7 @@ export default async function Home({
               href="/report"
               className="inline-flex h-14 w-full items-center justify-center rounded-2xl bg-[var(--color-primary)] px-8 text-lg font-bold text-white shadow-md transition-all hover:bg-[var(--color-primary-dark)] active:scale-[0.99] sm:w-auto"
             >
-              🚨 Report an Emergency
+              Report an Emergency
             </Link>
             <span className="text-xs font-medium text-muted">
               No login needed · takes &lt; 60 seconds
@@ -162,11 +153,10 @@ export default async function Home({
               href={p.href}
               className={`group flex flex-col rounded-2xl border p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.99] ${p.accent
                 ? "border-red-200 bg-red-50/60"
-                : "border-[var(--color-border)] bg-white"
+: "border-[var(--color-border)] bg-white"
                 }`}
             >
-              <span className="text-3xl">{p.icon}</span>
-              <h2 className="mt-3 font-bold">{p.title}</h2>
+                            <h2 className="mt-3 font-bold">{p.title}</h2>
               <p className="mt-1 flex-1 text-xs leading-relaxed text-muted">
                 {p.desc}
               </p>
@@ -190,8 +180,7 @@ export default async function Home({
                   <span className="absolute -top-3 left-5 inline-flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-primary)] text-xs font-bold text-white">
                     {i + 1}
                   </span>
-                  <span className="text-2xl">{s.icon}</span>
-                  <h3 className="mt-2 font-bold">{s.title}</h3>
+                                    <h3 className="mt-2 font-bold">{s.title}</h3>
                   <p className="mt-1 text-xs leading-relaxed text-muted">
                     {s.text}
                   </p>
@@ -222,9 +211,7 @@ export default async function Home({
         <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:grid-cols-3 sm:px-6">
           <div>
             <div className="flex items-center gap-2">
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--color-primary)] text-base">
-                🛟
-              </span>
+              <Logo size={32} />
               <b className="text-sm">RakshaSetu</b>
             </div>
             <p className="mt-2 text-xs leading-relaxed text-muted">

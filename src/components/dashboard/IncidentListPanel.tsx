@@ -71,7 +71,7 @@ export function IncidentListPanel({
               className={`rounded-md px-2.5 py-1 text-xs font-medium ${
                 filter === f.value
                   ? "bg-[var(--color-accent)] text-white"
-                  : "text-muted hover:bg-gray-100"
+: "text-muted hover:bg-gray-100"
               }`}
             >
               {f.label}
@@ -88,7 +88,7 @@ export function IncidentListPanel({
             className={`mb-2 w-full rounded-lg border bg-white p-3 text-left transition-colors ${
               selectedId === i.id
                 ? "border-[var(--color-accent)] ring-1 ring-[var(--color-accent)]"
-                : "border-[var(--color-border)] hover:bg-gray-50"
+: "border-[var(--color-border)] hover:bg-gray-50"
             }`}
           >
             <div className="flex items-center justify-between gap-2">
@@ -103,13 +103,13 @@ export function IncidentListPanel({
               <span>·</span>
               <span
                 title="Report confidence"
-                className={i.confidence_score >= 0.8 ? "font-medium text-green-600" : ""}
+                className={i.confidence_score >= 0.8 ? "font-medium text-green-600": ""}
               >
-                🔒 {Math.round(i.confidence_score * 100)}%
+                 {Math.round(i.confidence_score * 100)}%
               </span>
               {clusterSizes && clusterSizes.has(i.id) && (
                 <span className="rounded-full bg-blue-50 px-1.5 text-[10px] font-medium text-blue-700">
-                  👥 {clusterSizes.get(i.id)! + 1} reports
+                   {clusterSizes.get(i.id)! + 1} reports
                 </span>
               )}
               {i.location_text && (

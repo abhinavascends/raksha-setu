@@ -5,16 +5,17 @@ import { createClient } from "@/lib/supabase/client";
 import { useLiveData } from "@/hooks/useLiveData";
 import { SignOutButton } from "@/components/layout/SignOutButton";
 import type { Shelter, ShelterStock, StockItemType } from "@/types/database";
+import { Logo } from "@/components/ui/Logo";
 
 const STOCK_ITEMS: { value: StockItemType; label: string; icon: string }[] = [
-  { value: "FOOD", label: "Food", icon: "🍚" },
-  { value: "WATER", label: "Water", icon: "💧" },
-  { value: "MEDICAL", label: "Medical", icon: "💊" },
-  { value: "BLANKETS", label: "Blankets", icon: "🛏️" },
-  { value: "CLOTHING", label: "Clothing", icon: "👕" },
-  { value: "SANITATION", label: "Sanitation", icon: "🧼" },
-  { value: "TENTS", label: "Tents", icon: "⛺" },
-  { value: "OTHER", label: "Other", icon: "📦" },
+  { value: "FOOD", label: "Food", icon: "" },
+  { value: "WATER", label: "Water", icon: "" },
+  { value: "MEDICAL", label: "Medical", icon: "" },
+  { value: "BLANKETS", label: "Blankets", icon: "" },
+  { value: "CLOTHING", label: "Clothing", icon: "" },
+  { value: "SANITATION", label: "Sanitation", icon: "" },
+  { value: "TENTS", label: "Tents", icon: "" },
+  { value: "OTHER", label: "Other", icon: "" },
 ];
 
 const STATUS_STYLES: Record<string, string> = {
@@ -63,10 +64,10 @@ export default function ShelterManagePage() {
     setBusyId(shelterId);
     setError(null);
     const { error } = await createClient()
-      .from("shelters")
-      .update({ managed_by_id: userId })
-      .eq("id", shelterId)
-      .is("managed_by_id", null);
+.from("shelters")
+.update({ managed_by_id: userId })
+.eq("id", shelterId)
+.is("managed_by_id", null);
     if (error) setError(error.message);
     await refresh();
     setBusyId(null);
@@ -75,7 +76,7 @@ export default function ShelterManagePage() {
   const totals = useMemo(() => {
     const cap = myShelters.reduce((n, s) => n + s.total_capacity, 0);
     const occ = myShelters.reduce((n, s) => n + s.current_occupancy, 0);
-    return { cap, occ, pct: cap > 0 ? Math.round((occ / cap) * 100) : 0 };
+    return { cap, occ, pct: cap > 0 ? Math.round((occ / cap) * 100): 0 };
   }, [myShelters]);
 
   async function adjustOccupancy(shelter: Shelter, delta: number) {
@@ -86,9 +87,9 @@ export default function ShelterManagePage() {
       Math.min(shelter.total_capacity, shelter.current_occupancy + delta)
     );
     const { error } = await createClient()
-      .from("shelters")
-      .update({ current_occupancy: next })
-      .eq("id", shelter.id);
+.from("shelters")
+.update({ current_occupancy: next })
+.eq("id", shelter.id);
     if (error) setError(error.message);
     await refresh();
     setBusyId(null);
@@ -100,9 +101,7 @@ export default function ShelterManagePage() {
       <header className="sticky top-0 z-20 border-b border-[var(--color-border)] bg-white/85 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <div className="flex min-w-0 items-center gap-2.5">
-            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--color-primary)] text-xl shadow-sm">
-              🏠
-            </span>
+            <Logo size={40} />
             <div className="min-w-0">
               <div className="truncate text-sm font-bold leading-tight">
                 Shelter Manager
@@ -110,11 +109,11 @@ export default function ShelterManagePage() {
               <div className="flex items-center gap-1.5 text-xs text-muted">
                 <span
                   className={`inline-block h-1.5 w-1.5 rounded-full ${
-                    connected ? "bg-green-500" : "bg-amber-400"
+                    connected ? "bg-green-500": "bg-amber-400"
                   }`}
                 />
                 <span className="truncate">
-                  {!connected ? "Reconnecting…" : userName || "Relief operations"}
+                  {!connected ? "Reconnecting…": userName || "Relief operations"}
                 </span>
               </div>
             </div>
@@ -142,7 +141,7 @@ export default function ShelterManagePage() {
             [0, 1, 2].map((n) => (
               <Skeleton key={n} className="h-[76px] rounded-2xl" />
             ))
-          ) : (
+          ): (
             <>
               <div className="rounded-2xl border border-[var(--color-border)] bg-white p-4 shadow-sm">
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">
@@ -164,7 +163,7 @@ export default function ShelterManagePage() {
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">
                   Total Capacity Used
                 </div>
-                <div className={`mt-1 text-2xl font-bold tabular-nums ${totals.pct >= 90 ? "text-red-600" : totals.pct >= 50 ? "text-amber-600" : "text-green-600"}`}>
+                <div className={`mt-1 text-2xl font-bold tabular-nums ${totals.pct >= 90 ? "text-red-600": totals.pct >= 50 ? "text-amber-600": "text-green-600"}`}>
                   {totals.pct}%
                 </div>
               </div>
@@ -187,7 +186,7 @@ export default function ShelterManagePage() {
                   className="flex items-center justify-between rounded-xl border border-[var(--color-border)] bg-white p-4 text-left shadow-sm transition-all hover:border-blue-300 hover:shadow-md active:scale-[0.99]"
                 >
                   <span className="min-w-0">
-                    <b className="block truncate">🏠 {s.name}</b>
+                    <b className="block truncate"> {s.name}</b>
                     <span className="text-xs text-muted">{s.address}</span>
                   </span>
                   <span className="shrink-0 text-xs font-semibold text-[var(--color-accent)]">
@@ -206,15 +205,15 @@ export default function ShelterManagePage() {
               <Skeleton key={n} className="h-48 rounded-2xl" />
             ))}
           </ul>
-        ) : myShelters.length === 0 ? (
+        ): myShelters.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-[var(--color-border)] bg-white p-8 text-center">
-            <div className="text-3xl">🏠</div>
+            <div className="text-3xl"></div>
             <p className="mt-2 text-sm font-medium">No shelters assigned to you yet</p>
             <p className="mt-1 text-xs text-muted">
               Ask a control-room operator to link your account to a shelter.
             </p>
           </div>
-        ) : (
+        ): (
           <ul className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
             {myShelters.map((s) => (
               <li key={s.id}>
@@ -249,7 +248,7 @@ function ShelterCard({
     Math.round((shelter.current_occupancy / shelter.total_capacity) * 100)
   );
   const barColor =
-    pct >= 90 ? "#dc2626" : pct >= 50 ? "#d97706" : "#16a34a";
+    pct >= 90 ? "#dc2626": pct >= 50 ? "#d97706": "#16a34a";
   const closed = shelter.status === "CLOSED";
 
   return (
@@ -283,7 +282,7 @@ function ShelterCard({
       <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-gray-100">
         <div
           className="h-full rounded-full transition-all duration-300"
-          style={{ width: `${closed ? 0 : pct}%`, background: barColor }}
+          style={{ width: `${closed ? 0: pct}%`, background: barColor }}
         />
       </div>
 
@@ -324,7 +323,7 @@ function ShelterCard({
           href={`tel:${shelter.contact_phone}`}
           className="mt-3 inline-block text-xs font-medium text-[var(--color-accent)]"
         >
-          📞 {shelter.contact_phone}
+           {shelter.contact_phone}
         </a>
       )}
 
@@ -346,10 +345,10 @@ function StockEditor({
 
   const load = useCallback(async () => {
     const { data } = await createClient()
-      .from("shelter_stocks")
-      .select("*")
-      .eq("shelter_id", shelterId)
-      .order("item_type");
+.from("shelter_stocks")
+.select("*")
+.eq("shelter_id", shelterId)
+.order("item_type");
     setStocks(data ?? []);
   }, [shelterId]);
 
@@ -369,9 +368,9 @@ function StockEditor({
 
     if (item) {
       await supabase
-        .from("shelter_stocks")
-        .update({ quantity: next, last_updated: new Date().toISOString() })
-        .eq("id", item.id);
+.from("shelter_stocks")
+.update({ quantity: next, last_updated: new Date().toISOString() })
+.eq("id", item.id);
     } else {
       await supabase.from("shelter_stocks").upsert({
         shelter_id: shelterId,
@@ -393,15 +392,15 @@ function StockEditor({
         aria-expanded={open}
         className="flex w-full items-center justify-between text-xs font-semibold uppercase tracking-wide text-muted transition-colors hover:text-foreground"
       >
-        📦 Supplies inventory
-        <span>{open ? "▴" : "▾"}</span>
+         Supplies inventory
+        <span>{open ? "▴": "▾"}</span>
       </button>
 
       {open && (
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
           {stocks === null
             ? [0, 1, 2, 3].map((n) => <Skeleton key={n} className="h-16" />)
-            : STOCK_ITEMS.map(({ value, label, icon }) => {
+: STOCK_ITEMS.map(({ value, label, icon }) => {
                 const item = stocks.find((s) => s.item_type === value) ?? null;
                 const qty = item?.quantity ?? 0;
                 const max = item?.max_quantity ?? 100;
@@ -410,14 +409,14 @@ function StockEditor({
                   <div
                     key={value}
                     className={`rounded-lg border p-2 ${
-                      low ? "border-red-200 bg-red-50/60" : "border-[var(--color-border)] bg-gray-50/60"
+                      low ? "border-red-200 bg-red-50/60": "border-[var(--color-border)] bg-gray-50/60"
                     }`}
                   >
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-medium">
                         {icon} {label}
                       </span>
-                      <span className={`font-bold tabular-nums ${low ? "text-red-600" : ""}`}>
+                      <span className={`font-bold tabular-nums ${low ? "text-red-600": ""}`}>
                         {qty}
                       </span>
                     </div>

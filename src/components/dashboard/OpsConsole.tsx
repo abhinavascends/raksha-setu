@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useLiveData } from "@/hooks/useLiveData";
+import { useLiveData, isActiveAssignment } from "@/hooks/useLiveData";
 import { IncidentListPanel, type IncidentFilter } from "./IncidentListPanel";
 import { IncidentDetailPanel } from "./IncidentDetailPanel";
 import { ResourcePanel, type ReallocRec } from "./ResourcePanel";
@@ -55,11 +55,11 @@ export function OpsConsole() {
   const seenCritical = useRef(new Set<string>());
   useEffect(() => {
     incidents
-      .filter((i) => i.severity === "CRITICAL" && i.status === "REPORTED")
-      .forEach((i) => {
+.filter((i) => i.severity === "CRITICAL" && i.status === "REPORTED")
+.forEach((i) => {
         if (!seenCritical.current.has(i.id)) {
           seenCritical.current.add(i.id);
-          showToast(`🚨 CRITICAL: ${i.incident_number} — ${i.description.slice(0, 60)}...`);
+          showToast(` CRITICAL: ${i.incident_number} — ${i.description.slice(0, 60)}...`);
         }
       });
   }, [incidents, showToast]);
@@ -99,7 +99,7 @@ export function OpsConsole() {
       refresh();
       return json as { reallocations: ReallocRec[] | null };
     } catch (e) {
-      showToast(e instanceof Error ? e.message : "Update failed");
+      showToast(e instanceof Error ? e.message: "Update failed");
     }
   }
 
@@ -127,7 +127,7 @@ export function OpsConsole() {
                 className={`flex-1 px-2 py-2.5 text-xs font-medium ${
                   tab === key
                     ? "border-b-2 border-[var(--color-accent)] text-[var(--color-accent)]"
-                    : "text-muted hover:bg-gray-50"
+: "text-muted hover:bg-gray-50"
                 }`}
               >
                 {label}
@@ -151,7 +151,7 @@ export function OpsConsole() {
               onSearchChange={setSearch}
               selectedId={selectedId}
               onSelect={(id) =>
-                setSelectedId((prev) => (prev === id ? prev : id))
+                setSelectedId((prev) => (prev === id ? prev: id))
               }
               clusterSizes={clusterSizes}
             />
@@ -188,7 +188,7 @@ export function OpsConsole() {
         {/* IMD warning banner */}
         {alerts.length > 0 && (
           <div className="absolute inset-x-3 top-3 z-[1000] flex items-center gap-2 rounded-lg border border-orange-300 bg-orange-50/95 px-3 py-2 text-xs font-medium text-orange-800 shadow-md backdrop-blur">
-            ⚠️ {alerts[0].title}
+             {alerts[0].title}
             {alerts.length > 1 && (
               <span className="text-orange-600">(+{alerts.length - 1} more)</span>
             )}
@@ -234,25 +234,25 @@ export function OpsConsole() {
             <input
               type="checkbox"
               checked={layers.incidents}
-              onChange={(e) => setLayers((l) => ({ ...l, incidents: e.target.checked }))}
+              onChange={(e) => setLayers((l) => ({...l, incidents: e.target.checked }))}
             />
-            🚨 Incidents
+             Incidents
           </label>
           <label className="flex cursor-pointer items-center gap-1.5">
             <input
               type="checkbox"
               checked={layers.resources}
-              onChange={(e) => setLayers((l) => ({ ...l, resources: e.target.checked }))}
+              onChange={(e) => setLayers((l) => ({...l, resources: e.target.checked }))}
             />
-            🚤 Teams
+             Teams
           </label>
           <label className="flex cursor-pointer items-center gap-1.5">
             <input
               type="checkbox"
               checked={layers.shelters}
-              onChange={(e) => setLayers((l) => ({ ...l, shelters: e.target.checked }))}
+              onChange={(e) => setLayers((l) => ({...l, shelters: e.target.checked }))}
             />
-            🏠 Shelters
+             Shelters
           </label>
           <hr className="my-0.5 border-[var(--color-border)]" />
           <label className="flex cursor-pointer items-center gap-1.5">
@@ -261,7 +261,7 @@ export function OpsConsole() {
               checked={showHeatmap}
               onChange={(e) => setShowHeatmap(e.target.checked)}
             />
-            🔥 Heatmap
+             Heatmap
           </label>
         </div>
 
@@ -271,7 +271,7 @@ export function OpsConsole() {
           <Stat
             label="Critical"
             value={criticalCount}
-            tone={criticalCount ? "text-[var(--color-critical)]" : ""}
+            tone={criticalCount ? "text-[var(--color-critical)]": ""}
           />
           <Stat
             label="Teams Ready"
@@ -280,12 +280,12 @@ export function OpsConsole() {
           />
           <Stat
             label="Deployed"
-            value={assignments.length}
+            value={assignments.filter(isActiveAssignment).length}
             tone=""
           />
           <Stat
             label="Shelter Load"
-            value={`${capacity ? Math.round((occupancy / capacity) * 100) : 0}%`}
+            value={`${capacity ? Math.round((occupancy / capacity) * 100): 0}%`}
             tone=""
           />
         </div>
@@ -316,9 +316,9 @@ export function OpsConsole() {
 
       {/* Connection indicator */}
       <div
-        title={connected ? "Live updates connected" : "Reconnecting..."}
+        title={connected ? "Live updates connected": "Reconnecting..."}
         className={`fixed right-4 top-4 z-[1500] h-2.5 w-2.5 rounded-full ${
-          connected ? "bg-green-500" : "animate-pulse bg-amber-500"
+          connected ? "bg-green-500": "animate-pulse bg-amber-500"
         }`}
       />
     </div>

@@ -6,17 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useLiveData } from "@/hooks/useLiveData";
 import { SignOutButton } from "@/components/layout/SignOutButton";
 import type { Alert, Incident, Shelter } from "@/types/database";
-
-const TYPE_ICONS: Record<string, string> = {
-  FLOOD: "🌊",
-  FIRE: "🔥",
-  LANDSLIDE: "⛰️",
-  STRUCTURAL_COLLAPSE: "🏚️",
-  MEDICAL_EMERGENCY: "🚑",
-  EARTHQUAKE: "🌐",
-  CYCLONE: "🌀",
-  OTHER: "⚠️",
-};
+import { Logo } from "@/components/ui/Logo";
 
 const ALERT_COLORS: Record<string, { bar: string; bg: string; text: string }> = {
   EXTREME: { bar: "#dc2626", bg: "bg-red-50", text: "text-red-700" },
@@ -69,7 +59,7 @@ export default function CitizenDashboard() {
 
   const myReports = userId
     ? incidents.filter((i) => i.reporter_id === userId)
-    : [];
+: [];
   const openReports = myReports.filter(
     (i) => !["RESOLVED", "CANCELLED"].includes(i.status)
   );
@@ -81,9 +71,7 @@ export default function CitizenDashboard() {
       <header className="sticky top-0 z-20 border-b border-[var(--color-border)] bg-white/85 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <div className="flex min-w-0 items-center gap-2.5">
-            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--color-primary)] text-xl shadow-sm">
-              🛟
-            </span>
+            <Logo size={40} />
             <div className="min-w-0">
               <div className="truncate text-sm font-bold leading-tight">
                 RakshaSetu
@@ -91,15 +79,15 @@ export default function CitizenDashboard() {
               <div className="flex items-center gap-1.5 text-xs text-muted">
                 <span
                   className={`inline-block h-1.5 w-1.5 rounded-full ${
-                    connected ? "bg-green-500" : "bg-amber-400"
+                    connected ? "bg-green-500": "bg-amber-400"
                   }`}
                 />
                 <span className="truncate">
                   {!connected
                     ? "Reconnecting…"
-                    : userName
+: userName
                       ? `Live · Hi, ${userName}`
-                      : "Live"}
+: "Live"}
                 </span>
               </div>
             </div>
@@ -115,7 +103,7 @@ export default function CitizenDashboard() {
         {/* Alerts */}
         {initialLoading ? (
           <Skeleton className="mb-5 h-[72px] rounded-xl" />
-        ) : topAlerts.length > 0 ? (
+        ): topAlerts.length > 0 ? (
           <section
             className="mb-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
             aria-label="Active warnings"
@@ -128,8 +116,7 @@ export default function CitizenDashboard() {
                   className={`flex gap-3 rounded-xl p-3.5 ${c.bg} transition-transform hover:-translate-y-px`}
                   style={{ borderLeft: `4px solid ${c.bar}` }}
                 >
-                  <span aria-hidden>⚠️</span>
-                  <div className="min-w-0">
+                    <div className="min-w-0">
                     <div className={`text-sm font-semibold leading-snug ${c.text}`}>
                       {a.title}
                     </div>
@@ -143,7 +130,7 @@ export default function CitizenDashboard() {
               );
             })}
           </section>
-        ) : null}
+        ): null}
 
         {/* Primary actions */}
         <section className="mb-8 grid gap-3 sm:grid-cols-[2fr_1fr]">
@@ -159,18 +146,13 @@ export default function CitizenDashboard() {
                 Flood · Fire · Medical — takes under a minute
               </div>
             </div>
-            <span
-              className="text-3xl transition-transform group-hover:scale-110 sm:text-4xl"
-              aria-hidden
-            >
-              🚨
-            </span>
+            
           </Link>
           <a
             href="tel:112"
             className="flex items-center justify-center gap-2 rounded-2xl border border-[var(--color-border)] bg-white px-5 py-4 text-sm font-semibold text-[var(--color-primary)] shadow-sm transition-colors hover:bg-red-50 active:scale-[0.99]"
           >
-            <span aria-hidden>📞</span> Call helpline 112
+            Call helpline 112
           </a>
         </section>
 
@@ -207,9 +189,9 @@ export default function CitizenDashboard() {
                   </li>
                 ))}
               </ul>
-            ) : myReports.length === 0 ? (
+            ): myReports.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-[var(--color-border)] bg-white p-8 text-center">
-                <div className="text-3xl">📝</div>
+                
                 <p className="mt-2 text-sm font-medium">No reports yet</p>
                 <p className="mx-auto mt-1 max-w-xs text-xs leading-relaxed text-muted">
                   When you report an emergency it appears here with live status
@@ -222,7 +204,7 @@ export default function CitizenDashboard() {
                   Make your first report
                 </Link>
               </div>
-            ) : (
+            ): (
               <ul className="space-y-2.5">
                 {myReports.slice(0, 10).map((r: Incident) => {
                   const chip = STATUS_CHIPS[r.status] ?? STATUS_CHIPS.REPORTED;
@@ -235,14 +217,14 @@ export default function CitizenDashboard() {
                         <div className="min-w-0">
                           <div className="truncate text-sm font-semibold">
                             <span className="mr-1" aria-hidden>
-                              {TYPE_ICONS[r.type] ?? "⚠️"}
+                              
                             </span>
                             {r.location_text ?? r.type.replace(/_/g, " ")}
                           </div>
                           <div className="mt-0.5 text-xs text-muted">
                             <span className="font-mono">{r.incident_number}</span>{" "}
                             · {timeAgo(r.reported_at)} · {r.people_affected}{" "}
-                            {r.people_affected === 1 ? "person" : "people"}
+                            {r.people_affected === 1 ? "person": "people"}
                           </div>
                         </div>
                         <span
@@ -276,11 +258,11 @@ export default function CitizenDashboard() {
                   </li>
                 ))}
               </ul>
-            ) : shelters.length === 0 ? (
+            ): shelters.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-[var(--color-border)] bg-white p-6 text-center text-sm text-muted">
                 No shelter information available right now.
               </div>
-            ) : (
+            ): (
               <ul className="space-y-2.5">
                 {shelters.map((s: Shelter) => {
                   const pct = Math.min(
@@ -288,19 +270,18 @@ export default function CitizenDashboard() {
                     Math.round((s.current_occupancy / s.total_capacity) * 100)
                   );
                   const color =
-                    pct >= 90 ? "#dc2626" : pct >= 50 ? "#d97706" : "#16a34a";
+                    pct >= 90 ? "#dc2626": pct >= 50 ? "#d97706": "#16a34a";
                   const closed = s.status === "CLOSED";
                   return (
                     <li
                       key={s.id}
                       className={`rounded-xl border border-[var(--color-border)] bg-white p-4 shadow-sm transition-shadow hover:shadow-md ${
-                        closed ? "opacity-55" : ""
+                        closed ? "opacity-55": ""
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <div className="truncate text-sm font-semibold">
-                            <span className="mr-1" aria-hidden>🏠</span>
                             {s.name}
                           </div>
                           <div className="mt-0.5 truncate text-xs text-muted">
@@ -311,27 +292,27 @@ export default function CitizenDashboard() {
                           className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
                             closed
                               ? "bg-gray-100 text-gray-500"
-                              : pct >= 90
+: pct >= 90
                                 ? "bg-red-50 text-red-700"
-                                : pct >= 50
+: pct >= 50
                                   ? "bg-amber-50 text-amber-700"
-                                  : "bg-green-50 text-green-700"
+: "bg-green-50 text-green-700"
                           }`}
                         >
                           {closed
                             ? "Closed"
-                            : pct >= 90
+: pct >= 90
                               ? "Almost full"
-                              : pct >= 50
+: pct >= 50
                                 ? "Filling"
-                                : "Open"}
+: "Open"}
                         </span>
                       </div>
                       <div className="mt-2.5 flex items-center gap-2.5">
                         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100">
                           <div
                             className="h-full rounded-full transition-all"
-                            style={{ width: `${closed ? 0 : pct}%`, background: color }}
+                            style={{ width: `${closed ? 0: pct}%`, background: color }}
                           />
                         </div>
                         <span className="text-[11px] font-medium tabular-nums text-muted">
@@ -343,7 +324,7 @@ export default function CitizenDashboard() {
                           href={`tel:${s.contact_phone}`}
                           className="mt-2 inline-block rounded-lg px-1 py-0.5 text-xs font-medium text-[var(--color-accent)] transition-colors hover:bg-blue-50"
                         >
-                          📞 {s.contact_phone}
+                          {s.contact_phone}
                         </a>
                       )}
                     </li>

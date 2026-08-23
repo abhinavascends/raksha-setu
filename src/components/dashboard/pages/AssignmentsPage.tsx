@@ -32,7 +32,7 @@ export function AssignmentsPage() {
       if (!res.ok) throw new Error(json.error);
       refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Update failed");
+      setError(e instanceof Error ? e.message: "Update failed");
     }
     setBusy(null);
   }
@@ -66,10 +66,10 @@ export function AssignmentsPage() {
           <div key={a.id} className="mb-3 rounded-xl border border-[var(--color-border)] bg-white p-4 shadow-sm">
             <div className="flex items-center justify-between gap-2">
               <div className="flex flex-wrap items-center gap-2">
-                🚤 <b>{team?.team_code ?? "Team"}</b>
+                 <b>{team?.team_code ?? "Team"}</b>
                 <span className="text-muted">→</span>
                 <span className="font-mono text-xs text-muted">{incident?.incident_number}</span>
-                <Badge label={a.status} color={a.status === "PENDING" ? "MEDIUM" : "ASSIGNED"} />
+                <Badge label={a.status} color={a.status === "PENDING" ? "MEDIUM": "ASSIGNED"} />
               </div>
               {action && (
                 <Button
@@ -77,7 +77,7 @@ export function AssignmentsPage() {
                   disabled={busy === a.id}
                   onClick={() => setStatus(a.id, action.next)}
                 >
-                  {busy === a.id ? "..." : action.label}
+                  {busy === a.id ? "...": action.label}
                 </Button>
               )}
             </div>
@@ -87,10 +87,10 @@ export function AssignmentsPage() {
             )}
 
             <div className="mt-1.5 flex flex-wrap gap-x-4 text-xs text-muted">
-              {a.distance_km != null && <span>📏 {a.distance_km} km</span>}
-              {a.eta_minutes != null && <span>⏱️ ETA {a.eta_minutes} min</span>}
+              {a.distance_km != null && <span> {a.distance_km} km</span>}
+              {a.eta_minutes != null && <span> ETA {a.eta_minutes} min</span>}
               {a.allocation_score != null && (
-                <span>🎯 Score {Math.round(a.allocation_score)}</span>
+                <span> Score {Math.round(a.allocation_score)}</span>
               )}
               {a.is_manual_override && (
                 <span className="font-medium text-amber-600">Manual override</span>
@@ -108,28 +108,46 @@ export function AssignmentsPage() {
         onClick={() => setShowDone((s) => !s)}
         className="mt-2 text-sm font-medium text-[var(--color-accent)]"
       >
-        {showDone ? "Hide completed" : "Show completed / cancelled"}
+        {showDone ? "Hide completed": "Show completed / cancelled"}
       </button>
 
       {showDone && (
-        <div className="mt-2 opacity-70">
-          {assignments
-            .filter((a) => !isActiveAssignment(a))
-            .map((a) => {
+        <div className="mt-2 opacity-80">
+          {done.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-[var(--color-border)] p-6 text-center text-sm text-muted">
+              No completed or cancelled assignments yet.
+            </p>
+          ) : (
+            done.map((a) => {
               const team = teams.find((t) => t.id === a.resource_id);
               const incident = incidents.find((i) => i.id === a.incident_id);
               return (
                 <div key={a.id} className="mb-2 rounded-lg border border-[var(--color-border)] bg-white p-3 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span>
-                      🚤 <b>{team?.team_code}</b> →{" "}
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="min-w-0 truncate">
+                      <b>{team?.team_code}</b> →{" "}
                       <span className="font-mono text-xs">{incident?.incident_number}</span>
+                      {incident && (
+                        <span className="ml-2 hidden text-xs text-muted sm:inline">
+                          {incident.description.slice(0, 60)}
+                          {incident.description.length > 60 ? "…" : ""}
+                        </span>
+                      )}
                     </span>
                     <Badge label={a.status} color={a.status} />
                   </div>
+                  <div className="mt-1 flex flex-wrap gap-x-3 text-[11px] text-muted">
+                    {a.completed_at && <span>Completed {new Date(a.completed_at).toLocaleString()}</span>}
+                    {a.arrived_at && !a.completed_at && (
+                      <span>Last update {new Date(a.updated_at).toLocaleString()}</span>
+                    )}
+                    {a.allocation_score != null && <span>Score {Math.round(a.allocation_score)}</span>}
+                    {a.is_manual_override && <span className="text-amber-600">Manual</span>}
+                  </div>
                 </div>
               );
-            })}
+            })
+          )}
         </div>
       )}
     </div>

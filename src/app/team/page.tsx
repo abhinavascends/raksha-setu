@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useLiveData } from "@/hooks/useLiveData";
+import { useLiveData, isActiveAssignment } from "@/hooks/useLiveData";
 import { SignOutButton } from "@/components/layout/SignOutButton";
+import { Logo } from "@/components/ui/Logo";
 import type {
   Assignment,
   ResourceStatus,
@@ -65,9 +66,9 @@ export default function TeamPage() {
     const [{ data: profile }, { count }] = await Promise.all([
       supabase.from("profiles").select("role").eq("id", user.id).single(),
       supabase
-        .from("assignments")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "COMPLETED"),
+.from("assignments")
+.select("id", { count: "exact", head: true })
+.eq("status", "COMPLETED"),
     ]);
     setRole(profile?.role ?? null);
     setCompletedCount(count ?? 0);
@@ -87,7 +88,10 @@ export default function TeamPage() {
   const claimable = useMemo(() => teams.filter((t) => !t.managed_by_id), [teams]);
   const teamIds = useMemo(() => new Set(myTeams.map((t) => t.id)), [myTeams]);
   const missions = useMemo(
-    () => assignments.filter((a) => teamIds.has(a.resource_id)),
+    () =>
+      assignments.filter(
+        (a) => teamIds.has(a.resource_id) && isActiveAssignment(a)
+      ),
     [assignments, teamIds]
   );
   const incidentById = useMemo(
@@ -108,10 +112,10 @@ export default function TeamPage() {
     setError(null);
     const supabase = createClient();
     const { error } = await supabase
-      .from("resource_teams")
-      .update({ managed_by_id: userId })
-      .eq("id", teamId)
-      .is("managed_by_id", null);
+.from("resource_teams")
+.update({ managed_by_id: userId })
+.eq("id", teamId)
+.is("managed_by_id", null);
     if (error) setError(error.message);
     await Promise.all([loadStatic(), refresh()]);
     setBusy(false);
@@ -121,12 +125,12 @@ export default function TeamPage() {
     setBusy(true);
     setError(null);
     const { error } = await createClient()
-      .from("resource_teams")
-      .update({
+.from("resource_teams")
+.update({
         status: status as ResourceStatus,
         last_status_update: new Date().toISOString(),
       })
-      .eq("id", teamId);
+.eq("id", teamId);
     if (error) setError(error.message);
     else void refresh();
     setBusy(false);
@@ -148,7 +152,7 @@ export default function TeamPage() {
       void refresh();
       if (action.next === "COMPLETED") void loadStatic();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Update failed");
+      setError(e instanceof Error ? e.message: "Update failed");
     }
     setBusy(false);
   }
@@ -156,9 +160,9 @@ export default function TeamPage() {
   async function escalate(incidentId: string) {
     setBusy(true);
     await createClient()
-      .from("incidents")
-      .update({ status: "ESCALATED" })
-      .eq("id", incidentId);
+.from("incidents")
+.update({ status: "ESCALATED" })
+.eq("id", incidentId);
     void refresh();
     setBusy(false);
   }
@@ -172,9 +176,7 @@ export default function TeamPage() {
       <header className="sticky top-0 z-20 border-b border-[var(--color-border)] bg-white/85 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <div className="flex min-w-0 items-center gap-2.5">
-            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--color-primary)] text-xl shadow-sm">
-              🚤
-            </span>
+            <Logo size={40} />
             <div className="min-w-0">
               <div className="truncate text-sm font-bold leading-tight">
                 Field Team Console
@@ -182,13 +184,13 @@ export default function TeamPage() {
               <div className="flex items-center gap-1.5 text-xs text-muted">
                 <span
                   className={`inline-block h-1.5 w-1.5 rounded-full ${
-                    connected ? "bg-green-500" : "bg-amber-400"
+                    connected ? "bg-green-500": "bg-amber-400"
                   }`}
                 />
                 <span className="truncate">
                   {!connected
                     ? "Reconnecting…"
-                    : userName || "Rescue operations"}
+: userName || "Rescue operations"}
                 </span>
               </div>
             </div>
@@ -218,7 +220,7 @@ export default function TeamPage() {
         <section className="mb-7 grid grid-cols-3 gap-3" aria-label="Summary">
           {initialLoading ? (
             [0, 1, 2].map((n) => <Skeleton key={n} className="h-[76px] rounded-2xl" />)
-          ) : (
+          ): (
             <>
               <div className="rounded-2xl border border-[var(--color-border)] bg-white p-4 shadow-sm">
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">
@@ -251,7 +253,7 @@ export default function TeamPage() {
         {/* My teams */}
         {initialLoading ? (
           <Skeleton className="mb-7 h-28 rounded-2xl" />
-        ) : myTeams.length > 0 ? (
+        ): myTeams.length > 0 ? (
           <section className="mb-7" aria-label="My teams">
             <h2 className="mb-3 px-1 text-sm font-bold uppercase tracking-wider text-muted">
               My Teams
@@ -279,6 +281,15 @@ export default function TeamPage() {
                   <div className="mt-1.5 truncate text-xs text-muted">
                     {t.capabilities.join(" · ") || "general"} · cap {t.capacity}
                   </div>
+                  {t.status === "RETURNING" && (
+                    <button
+                      disabled={busy}
+                      onClick={() => setStatus(t.id, "AVAILABLE")}
+                      className="mt-3 h-10 w-full rounded-lg border border-cyan-300 bg-cyan-50 text-xs font-semibold text-cyan-700 transition-colors hover:bg-cyan-100 active:scale-[0.99]"
+                    >
+                      Confirm Returned to Base
+                    </button>
+                  )}
                   {["AVAILABLE", "UNAVAILABLE"].includes(t.status) && (
                     <button
                       disabled={busy}
@@ -298,7 +309,7 @@ export default function TeamPage() {
               ))}
             </div>
           </section>
-        ) : null}
+        ): null}
 
         {/* Claim flow */}
         {!initialLoading && myTeams.length === 0 && claimable.length > 0 && (
@@ -329,7 +340,7 @@ export default function TeamPage() {
 
         {!initialLoading && myTeams.length === 0 && claimable.length === 0 && (
           <div className="mb-7 rounded-2xl border border-dashed border-[var(--color-border)] bg-white p-8 text-center">
-            <div className="text-3xl">🚤</div>
+            <div className="text-3xl"></div>
             <p className="mt-2 text-sm font-medium">No team linked yet</p>
             <p className="mt-1 text-xs text-muted">
               Ask a control-room operator to link your account to a rescue team.
@@ -350,18 +361,19 @@ export default function TeamPage() {
 
           {initialLoading ? (
             <Skeleton className="h-56 rounded-2xl" />
-          ) : missions.length === 0 ? (
+          ): missions.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-[var(--color-border)] bg-white p-8 text-center">
-              <div className="text-3xl">🟢</div>
+              <div className="text-3xl"></div>
               <p className="mt-2 text-sm font-medium">On standby</p>
               <p className="mt-1 text-xs text-muted">
                 New assignments appear here instantly when control room dispatches you.
               </p>
             </div>
-          ) : (
+          ): (
             <ul className="space-y-4">
               {missions.map((a) => {
                 const inc = incidentById.get(a.incident_id);
+                const team = teams.find((t) => t.id === a.resource_id);
                 const action = NEXT_ACTION[a.status];
                 const stepIdx = STEPS.indexOf(a.status as (typeof STEPS)[number]);
                 return (
@@ -379,29 +391,29 @@ export default function TeamPage() {
                             <div className="flex w-full items-center">
                               <span
                                 className={`h-1 flex-1 rounded-full ${
-                                  idx === 0 ? "opacity-0" : done || current ? "bg-[var(--color-accent)]" : "bg-gray-200"
+                                  idx === 0 ? "opacity-0": done || current ? "bg-[var(--color-accent)]": "bg-gray-200"
                                 }`}
                               />
                               <span
                                 className={`mx-1 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[9px] font-bold ${
                                   current
                                     ? "bg-[var(--color-accent)] text-white ring-4 ring-blue-100"
-                                    : done
+: done
                                       ? "bg-[var(--color-accent)]/70 text-white"
-                                      : "bg-gray-200 text-gray-400"
+: "bg-gray-200 text-gray-400"
                                 }`}
                               >
-                                {done ? "✓" : idx + 1}
+                                {done ? "✓": idx + 1}
                               </span>
                               <span
                                 className={`h-1 flex-1 rounded-full ${
-                                  idx === STEPS.length - 1 ? "opacity-0" : done ? "bg-[var(--color-accent)]" : "bg-gray-200"
+                                  idx === STEPS.length - 1 ? "opacity-0": done ? "bg-[var(--color-accent)]": "bg-gray-200"
                                 }`}
                               />
                             </div>
                             <span
                               className={`text-[10px] font-medium ${
-                                current ? "text-[var(--color-accent)]" : "text-muted"
+                                current ? "text-[var(--color-accent)]": "text-muted"
                               }`}
                             >
                               {STEP_LABELS[s]}
@@ -415,7 +427,7 @@ export default function TeamPage() {
                       <div className="flex items-center justify-between gap-2">
                         {a.status === "PENDING" && (
                           <span className="inline-flex animate-pulse items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-[11px] font-bold text-red-600">
-                            🔔 NEW DISPATCH
+                             NEW DISPATCH
                           </span>
                         )}
                         {a.status !== "PENDING" && (
@@ -438,23 +450,23 @@ export default function TeamPage() {
                           </p>
                           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
                             <span>
-                              📍{" "}
+                              {" "}
                               {inc.location_text ??
                                 `${inc.latitude.toFixed(4)}, ${inc.longitude.toFixed(4)}`}
                             </span>
-                            <span>👥 {inc.people_affected} people</span>
+                            <span> {inc.people_affected} people</span>
                             {inc.required_capabilities.length > 0 && (
                               <span>Needs: {inc.required_capabilities.join(", ")}</span>
                             )}
                           </div>
                           <div className="mt-4 grid grid-cols-2 gap-2">
                             <a
-                              href={`https://www.google.com/maps/dir/?api=1&destination=${inc.latitude},${inc.longitude}`}
+                              href={`https://www.google.com/maps/dir/?api=1&origin=${team?.latitude ?? ""},${team?.longitude ?? ""}&destination=${inc.latitude},${inc.longitude}`}
                               target="_blank"
                               rel="noreferrer"
                               className="inline-flex h-11 items-center justify-center rounded-lg border border-[var(--color-border)] text-sm font-medium transition-colors hover:bg-gray-50 active:scale-[0.99]"
                             >
-                              🗺️ Navigate
+                               Navigate
                             </a>
                             {a.status !== "PENDING" && inc.status !== "ESCALATED" && (
                               <button
@@ -462,12 +474,12 @@ export default function TeamPage() {
                                 onClick={() => escalate(inc.id)}
                                 className="inline-flex h-11 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-sm font-medium text-red-600 transition-colors hover:bg-red-100 active:scale-[0.99]"
                               >
-                                🆘 Need Backup
+                                 Need Backup
                               </button>
                             )}
                           </div>
                         </>
-                      ) : (
+                      ): (
                         <p className="mt-2 text-sm text-muted">Loading incident…</p>
                       )}
 

@@ -37,7 +37,7 @@ function incidentIcon(severity: string, pulse: boolean) {
   return L.divIcon({
     className: "",
     html: `<div style="
-      width:${pulse ? 22 : 18}px;height:${pulse ? 22 : 18}px;border-radius:50% 50% 50% 0;
+      width:${pulse ? 22: 18}px;height:${pulse ? 22: 18}px;border-radius:50% 50% 50% 0;
       transform:rotate(-45deg);background:${color};border:2px solid white;
       box-shadow:0 1px 4px rgba(0,0,0,.4);"></div>`,
     iconSize: [20, 20],
@@ -79,8 +79,8 @@ export default function OpsMap(props: OpsMapProps) {
 
   const routes = useMemo(() => {
     return assignments
-      .filter((a) => ["EN_ROUTE", "ON_SCENE", "ACKNOWLEDGED", "PENDING"].includes(a.status))
-      .map((a) => {
+.filter((a) => ["EN_ROUTE", "ON_SCENE", "ACKNOWLEDGED", "PENDING"].includes(a.status))
+.map((a) => {
         const team = teams.find((t) => t.id === a.resource_id);
         const incident = incidents.find((i) => i.id === a.incident_id);
         if (!team || !incident) return null;
@@ -91,7 +91,7 @@ export default function OpsMap(props: OpsMapProps) {
           to: [incident.latitude, incident.longitude] as [number, number],
         };
       })
-      .filter(Boolean) as {
+.filter(Boolean) as {
       id: string;
       status: string;
       from: [number, number];
@@ -128,7 +128,7 @@ export default function OpsMap(props: OpsMapProps) {
             radius={30 * w + 15}
             pathOptions={{
               color: "transparent",
-              fillColor: w >= 0.75 ? "#dc2626" : "#f59e0b",
+              fillColor: w >= 0.75 ? "#dc2626": "#f59e0b",
               fillOpacity: 0.18 * w + 0.05,
             }}
           />
@@ -136,15 +136,15 @@ export default function OpsMap(props: OpsMapProps) {
 
       {/* Weather warning zones */}
       {props.alerts
-        .filter((a) => a.affected_area && typeof a.affected_area === "object")
-        .map((a) => {
+.filter((a) => a.affected_area && typeof a.affected_area === "object")
+.map((a) => {
           const area = a.affected_area as { lat: number; lng: number; radius_km: number };
           const color =
             a.severity === "EXTREME"
               ? "#dc2626"
-              : a.severity === "SEVERE"
+: a.severity === "SEVERE"
                 ? "#ea580c"
-                : "#d97706";
+: "#d97706";
           return (
             <CircleMarker
               key={a.id}
@@ -159,7 +159,7 @@ export default function OpsMap(props: OpsMapProps) {
               }}
             >
               <Popup>
-                <b>⚠️ {a.title}</b>
+                <b> {a.title}</b>
                 <br />
                 <span style={{ fontSize: 11 }}>{a.description}</span>
               </Popup>
@@ -175,10 +175,10 @@ export default function OpsMap(props: OpsMapProps) {
             key={r.id}
             positions={geometry ?? [r.from, r.to]}
             pathOptions={{
-              color: r.status === "EN_ROUTE" ? "#2563eb" : "#93c5fd",
-              weight: 3,
-              dashArray: r.status === "PENDING" ? "6 8" : undefined,
-              opacity: 0.8,
+              color: r.status === "EN_ROUTE" || r.status === "ON_SCENE" ? "#dc2626" : "#f87171",
+              weight: 3.5,
+              dashArray: ["PENDING", "ACKNOWLEDGED"].includes(r.status) ? "6 8" : undefined,
+              opacity: 0.95,
             }}
           />
         );
@@ -237,7 +237,7 @@ export default function OpsMap(props: OpsMapProps) {
               pathOptions={{
                 color: "white",
                 weight: 2,
-                fillColor: pct >= 90 ? "#dc2626" : pct >= 50 ? "#d97706" : "#16a34a",
+                fillColor: pct >= 90 ? "#dc2626": pct >= 50 ? "#d97706": "#16a34a",
                 fillOpacity: 0.95,
               }}
             >
@@ -287,7 +287,7 @@ function useRoadRoutes(
     routes.forEach((r) => {
       if (cache.has(r.id)) {
         setGeometries((prev) =>
-          prev[r.id] ? prev : { ...prev, [r.id]: cache.get(r.id)! }
+          prev[r.id] ? prev: {...prev, [r.id]: cache.get(r.id)! }
         );
         return;
       }
@@ -295,18 +295,18 @@ function useRoadRoutes(
         `https://router.project-osrm.org/route/v1/driving/` +
         `${r.from[1]},${r.from[0]};${r.to[1]},${r.to[0]}?overview=full&geometries=geojson`;
       fetch(url)
-        .then((res) => res.json())
-        .then((json) => {
+.then((res) => res.json())
+.then((json) => {
           const coords: [number, number][] | undefined =
             json?.routes?.[0]?.geometry?.coordinates?.map(
               (c: [number, number]) => [c[1], c[0]]
             );
           if (coords && coords.length > 1) {
             cache.set(r.id, coords);
-            setGeometries((prev) => ({ ...prev, [r.id]: coords }));
+            setGeometries((prev) => ({...prev, [r.id]: coords }));
           }
         })
-        .catch(() => {
+.catch(() => {
           /* straight-line fallback already rendered */
         });
     });

@@ -25,6 +25,11 @@ export interface LiveData {
 
 type ChangePayload = RealtimePostgresChangesPayload<Record<string, unknown>>;
 
+// Every hook instance needs its own topic - reusing a channel name
+// returns the already-subscribed channel and adding callbacks to it
+// throws "cannot add postgres_changes after subscribe()".
+let channelSeq = 0;
+
 // Loads all operational data once and then keeps it in sync via
 // Supabase Realtime (postgres_changes) - no polling needed.
 export function useLiveData(): LiveData {
@@ -46,8 +51,8 @@ export function useLiveData(): LiveData {
       supabase
         .from("assignments")
         .select("*")
-        .in("status", ["PENDING", "ACKNOWLEDGED", "EN_ROUTE", "ON_SCENE"])
-        .order("assigned_at", { ascending: false }),
+        .order("assigned_at", { ascending: false })
+        .limit(200),
     ]);
     if (inc.data) setIncidents(inc.data);
     if (tm.data) setTeams(tm.data);
@@ -83,7 +88,7 @@ export function useLiveData(): LiveData {
 
     const supabase = createClient();
     const channel = supabase
-      .channel("ops-live")
+      .channel(`ops-live-${++channelSeq}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "incidents" },

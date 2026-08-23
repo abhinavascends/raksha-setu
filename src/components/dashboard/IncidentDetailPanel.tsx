@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { createClient } from "@/lib/supabase/client";
+import { haversineKm, etaMinutes } from "@/lib/allocation";
 import type {
   Assignment,
   Incident,
@@ -52,7 +54,30 @@ export function IncidentDetailPanel({
 
   const activeAssignment = incident
     ? assignments.find((a) => a.incident_id === incident.id)
-    : undefined;
+: undefined;
+
+  // Closed incidents are read-only - no dispatch UI
+  const isClosed =
+    !!incident && ["RESOLVED", "CANCELLED"].includes(incident.status);
+
+  // Resolution history (includes COMPLETED assignments, which the live
+  // store excludes) - fetched when an open incident turns closed.
+  const [history, setHistory] = useState<Assignment[]>([]);
+  useEffect(() => {
+    void (async () => {
+      if (!incident || !["RESOLVED", "CANCELLED"].includes(incident.status)) {
+        setHistory([]);
+        return;
+      }
+      const { data } = await createClient()
+        .from("assignments")
+        .select("*")
+        .eq("incident_id", incident.id)
+        .order("assigned_at", { ascending: false });
+      setHistory(data ?? []);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [incident?.id, incident?.status]);
 
   const allocate = useCallback(async (incidentId: string) => {
     setLoading(true);
@@ -68,7 +93,7 @@ export function IncidentDetailPanel({
       if (!res.ok) throw new Error(json.error ?? "Allocation failed");
       setRecs(json.recommendations ?? []);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Allocation failed");
+      setError(e instanceof Error ? e.message: "Allocation failed");
       setRecs([]);
     } finally {
       setLoading(false);
@@ -86,7 +111,7 @@ export function IncidentDetailPanel({
 
   useEffect(() => {
     // Defer allocation fetch so setState never runs synchronously
-    if (incident && !activeAssignment && recs.length === 0)
+    if (incident && !isClosed && !activeAssignment && recs.length === 0)
       void (async () => {
         await allocate(incident.id);
       })();
@@ -113,7 +138,7 @@ export function IncidentDetailPanel({
                 availabilityScore: rec.availabilityScore,
                 capacityScore: rec.capacityScore,
               }
-            : undefined,
+: undefined,
           explanation: rec?.explanation,
           distanceKm: rec?.distanceKm,
           etaMinutes: rec?.etaMinutes,
@@ -124,7 +149,7 @@ export function IncidentDetailPanel({
       if (!res.ok) throw new Error(json.error ?? "Assignment failed");
       onAssigned();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Assignment failed");
+      setError(e instanceof Error ? e.message: "Assignment failed");
     } finally {
       setAssigning(null);
     }
@@ -132,7 +157,7 @@ export function IncidentDetailPanel({
 
   if (!incident) return null;
 
-  const shown = showAll ? recs : recs.slice(0, 3);
+  const shown = showAll ? recs: recs.slice(0, 3);
 
   return (
     <div className="flex h-full flex-col overflow-y-auto p-4">
@@ -149,23 +174,108 @@ export function IncidentDetailPanel({
       <p className="mb-2 text-sm">{incident.description}</p>
 
       <div className="mb-3 grid grid-cols-2 gap-2 text-xs text-muted">
-        <div>📍 {incident.location_text ?? `${incident.latitude.toFixed(4)}, ${incident.longitude.toFixed(4)}`}</div>
-        <div>👥 {incident.people_affected} people affected</div>
-        <div>🎯 Needs: {incident.required_capabilities.join(", ") || "general"}</div>
-        <div>🔒 Confidence: {Math.round(incident.confidence_score * 100)}%</div>
+        <div> {incident.location_text ?? `${incident.latitude.toFixed(4)}, ${incident.longitude.toFixed(4)}`}</div>
+        <div> {incident.people_affected} people affected</div>
+        <div> Needs: {incident.required_capabilities.join(", ") || "general"}</div>
+        <div> Confidence: {Math.round(incident.confidence_score * 100)}%</div>
       </div>
 
-      {activeAssignment && (
+      {isClosed && (
+        <div className="mb-3 rounded-lg border border-green-200 bg-green-50 p-3">
+          <div className="text-xs font-semibold uppercase tracking-wide text-green-700">
+            {incident.status === "RESOLVED" ? "Resolved" : "Cancelled"}
+            {incident.resolved_at
+              ? ` · ${new Date(incident.resolved_at).toLocaleString()}`
+              : ""}
+          </div>
+
+          {history.length > 0 ? (
+            <div className="mt-2 space-y-2">
+              {history.map((a) => {
+                const team = teams.find((t) => t.id === a.resource_id);
+                return (
+                  <div
+                    key={a.id}
+                    className="rounded-lg bg-white/80 p-2.5 text-xs"
+                  >
+                    <div className="flex items-center justify-between">
+                      <b>{team?.team_code ?? "Unknown team"}</b>
+                      <Badge label={a.status} color={a.status === "COMPLETED" ? "RESOLVED" : a.status} />
+                    </div>
+                    <div className="mt-1 text-muted">
+                      Assigned{" "}
+                      {new Date(a.assigned_at).toLocaleString()}
+                      {a.is_manual_override && " (manual)"}
+                    </div>
+                    {(a.distance_km != null || a.eta_minutes != null) && (
+                      <div className="mt-0.5 text-muted">
+                        {[a.distance_km != null ? `${a.distance_km.toFixed(1)} km` : null,
+                          a.eta_minutes != null ? `ETA ~${Math.round(a.eta_minutes)} min` : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </div>
+                    )}
+                    {a.acknowledged_at && (
+                      <div className="mt-0.5 text-muted">
+                        Acknowledged {new Date(a.acknowledged_at).toLocaleTimeString()}
+                        {a.arrived_at &&
+                          ` · On scene ${new Date(a.arrived_at).toLocaleTimeString()}`}
+                        {a.completed_at &&
+                          ` · Completed ${new Date(a.completed_at).toLocaleTimeString()}`}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="mt-1 text-xs text-muted">
+              No team was dispatched to this incident.
+            </p>
+          )}
+        </div>
+      )}
+
+      {!isClosed && activeAssignment && (
         <div className="mb-3 rounded-lg border border-blue-200 bg-blue-50 p-3">
           <div className="text-xs font-medium uppercase tracking-wide text-blue-700">
             Current assignment · {activeAssignment.status.replace("_", " ")}
           </div>
           {(() => {
             const team = teams.find((t) => t.id === activeAssignment.resource_id);
+            const km =
+              activeAssignment.distance_km ??
+              (team && incident
+                ? haversineKm(
+                    team.latitude,
+                    team.longitude,
+                    incident.latitude,
+                    incident.longitude
+                  )
+                : null);
+            const eta =
+              activeAssignment.eta_minutes ?? (km != null ? etaMinutes(km) : null);
             return (
               <div className="mt-1 text-sm">
-                🚤 <b>{team?.team_code}</b>{" "}
-                {activeAssignment.eta_minutes != null && `· ETA ${activeAssignment.eta_minutes} min`}
+                 <b>{team?.team_code}</b>
+                {km != null && ` · ${km.toFixed(1)} km`}
+                {eta != null && ` · ETA ~${Math.round(eta)} min`}
+                {activeAssignment.is_manual_override && (
+                  <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                    manual
+                  </span>
+                )}
+                {team && incident && (
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&origin=${team.latitude},${team.longitude}&destination=${incident.latitude},${incident.longitude}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="ml-2 text-xs font-medium text-[var(--color-accent)] underline"
+                  >
+                    Navigate route
+                  </a>
+                )}
                 {team && activeAssignment.status === "PENDING" && (
                   <Button
                     size="sm"
@@ -189,7 +299,7 @@ export function IncidentDetailPanel({
         </div>
       )}
 
-      {!activeAssignment && (
+      {!isClosed && !activeAssignment && (
         <div className="flex-1">
           <h3 className="mb-2 text-sm font-semibold">Recommended Resources</h3>
 
@@ -231,7 +341,7 @@ export function IncidentDetailPanel({
                   </div>
 
                   <div className="mt-1.5 text-xs text-muted">
-                    🚤 {r.distanceKm} km · ~{r.etaMinutes} min ETA
+                     {r.distanceKm} km · ~{r.etaMinutes} min ETA
                   </div>
 
                   {/* score breakdown bars */}
@@ -248,7 +358,7 @@ export function IncidentDetailPanel({
                         <span className="w-20 shrink-0 text-[11px] text-muted">{label}</span>
                         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100">
                           <div
-                            className={`h-full rounded-full ${v >= 75 ? "bg-green-500" : v >= 40 ? "bg-amber-500" : "bg-red-400"}`}
+                            className={`h-full rounded-full ${v >= 75 ? "bg-green-500": v >= 40 ? "bg-amber-500": "bg-red-400"}`}
                             style={{ width: `${v}%` }}
                           />
                         </div>
@@ -265,7 +375,7 @@ export function IncidentDetailPanel({
                     disabled={assigning !== null}
                     onClick={() => assign(r.resourceId, r)}
                   >
-                    {assigning === r.resourceId ? "Assigning..." : "ASSIGN"}
+                    {assigning === r.resourceId ? "Assigning...": "ASSIGN"}
                   </Button>
                 </div>
               );
@@ -276,7 +386,7 @@ export function IncidentDetailPanel({
               onClick={() => setShowAll((s) => !s)}
               className="mb-2 w-full text-sm font-medium text-[var(--color-accent)]"
             >
-              {showAll ? "Show top 3 only" : `See all alternatives (${recs.length - 3})`}
+              {showAll ? "Show top 3 only": `See all alternatives (${recs.length - 3})`}
             </button>
           )}
 

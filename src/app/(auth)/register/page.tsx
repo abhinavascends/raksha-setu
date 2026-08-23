@@ -7,31 +7,36 @@ import { createClient } from "@/lib/supabase/client";
 import { routeByRole } from "@/lib/roleRouting";
 import { Button } from "@/components/ui/Button";
 import { Input, Label } from "@/components/ui/Input";
+import { Logo } from "@/components/ui/Logo";
 
 const ROLES = [
   {
     value: "CITIZEN",
-    icon: "🚨",
+    icon: "",
     label: "Citizen",
     desc: "Report emergencies, track help, find shelters",
+    official: false,
   },
   {
     value: "OPERATOR",
-    icon: "🖥️",
+    icon: "",
     label: "Control Room Operator",
     desc: "Triage incidents and dispatch rescue teams",
+    official: true,
   },
   {
     value: "FIELD_TEAM",
-    icon: "🚤",
+    icon: "",
     label: "Field Rescue Team",
     desc: "Receive missions and update status on-scene",
+    official: true,
   },
   {
     value: "SHELTER_MANAGER",
-    icon: "🏠",
+    icon: "",
     label: "Shelter Manager",
     desc: "Manage occupancy and relief supplies",
+    official: true,
   },
 ] as const;
 
@@ -57,6 +62,17 @@ export default function RegisterPage() {
       return;
     }
 
+    const selectedRole = ROLES.find((r) => r.value === role);
+    if (selectedRole?.official) {
+      const domain = email.toLowerCase().trim().split("@").pop();
+      if (domain !== "gov.in") {
+        setError(
+          `${selectedRole.label} is an official role — use a government email like name@gov.in`
+        );
+        return;
+      }
+    }
+
     setLoading(true);
 
     const supabase = createClient();
@@ -72,7 +88,7 @@ export default function RegisterPage() {
     if (error) {
       setError(error.message === "Invalid login credentials"
         ? "Wrong email or password — try again"
-        : error.message);
+: error.message);
       setLoading(false);
       return;
     }
@@ -93,8 +109,7 @@ export default function RegisterPage() {
     return (
       <main className="flex min-h-screen items-center justify-center px-4">
         <div className="w-full max-w-sm rounded-2xl border border-[var(--color-border)] bg-white p-8 text-center shadow-sm">
-          <div className="text-4xl">📧</div>
-          <h1 className="mt-3 text-xl font-bold">Check your inbox</h1>
+                    <h1 className="mt-3 text-xl font-bold">Check your inbox</h1>
           <p className="mt-2 text-sm leading-relaxed text-muted">
             We sent a confirmation link to{" "}
             <b className="text-foreground">{email}</b>. Click it to activate
@@ -117,9 +132,7 @@ export default function RegisterPage() {
       <header className="border-b border-[var(--color-border)] bg-white/85 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
           <Link href="/" className="flex items-center gap-2">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--color-primary)] text-lg shadow-sm">
-              🛟
-            </span>
+            <Logo size={36} />
             <span className="text-sm font-bold tracking-tight">RakshaSetu</span>
           </Link>
           <Link
@@ -150,7 +163,7 @@ export default function RegisterPage() {
                   className={`cursor-pointer rounded-xl border-2 bg-white p-4 shadow-sm transition-all active:scale-[0.99] ${
                     role === r.value
                       ? "border-[var(--color-primary)] ring-1 ring-[var(--color-primary)]"
-                      : "border-transparent hover:border-gray-300"
+: "border-transparent hover:border-gray-300"
                   }`}
                 >
                   <input
@@ -162,9 +175,15 @@ export default function RegisterPage() {
                     className="sr-only"
                   />
                   <div className="flex items-start gap-3">
-                    <span className="text-2xl">{r.icon}</span>
                     <span>
-                      <span className="block text-sm font-bold">{r.label}</span>
+                      <span className="block text-sm font-bold">
+                        {r.label}
+                        {r.official && (
+                          <span className="ml-2 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                            gov.in email
+                          </span>
+                        )}
+                      </span>
                       <span className="mt-0.5 block text-xs leading-snug text-muted">
                         {r.desc}
                       </span>
@@ -194,7 +213,7 @@ export default function RegisterPage() {
                   id="phone"
                   type="tel"
                   autoComplete="tel"
-                  placeholder="+91 ..."
+                  placeholder="+91..."
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                 />
@@ -218,7 +237,7 @@ export default function RegisterPage() {
                 <div className="relative">
                   <Input
                     id="password"
-                    type={showPassword ? "text" : "password"}
+                    type={showPassword ? "text": "password"}
                     required
                     minLength={6}
                     autoComplete="new-password"
@@ -228,10 +247,10 @@ export default function RegisterPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-label={showPassword ? "Hide password": "Show password"}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted hover:text-foreground"
                   >
-                    {showPassword ? "Hide" : "Show"}
+                    {showPassword ? "Hide": "Show"}
                   </button>
                 </div>
               </div>
@@ -239,7 +258,7 @@ export default function RegisterPage() {
                 <Label htmlFor="confirm">Confirm password</Label>
                 <Input
                   id="confirm"
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? "text": "password"}
                   required
                   autoComplete="new-password"
                   value={confirmPassword}
@@ -260,7 +279,7 @@ export default function RegisterPage() {
               disabled={loading}
               className="mt-5 w-full"
             >
-              {loading ? "Creating account..." : "Create Account"}
+              {loading ? "Creating account...": "Create Account"}
             </Button>
           </div>
         </form>

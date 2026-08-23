@@ -5,14 +5,14 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 const CATEGORIES = [
-  { value: "FLOOD", label: "Flood", icon: "🌊" },
-  { value: "FIRE", label: "Fire", icon: "🔥" },
-  { value: "LANDSLIDE", label: "Landslide", icon: "⛰️" },
-  { value: "STRUCTURAL_COLLAPSE", label: "Collapse", icon: "🏚️" },
-  { value: "MEDICAL_EMERGENCY", label: "Medical", icon: "🚑" },
-  { value: "EARTHQUAKE", label: "Earthquake", icon: "🌐" },
-  { value: "CYCLONE", label: "Cyclone", icon: "🌀" },
-  { value: "OTHER", label: "Other", icon: "⚠️" },
+  { value: "FLOOD", label: "Flood", icon: "" },
+  { value: "FIRE", label: "Fire", icon: "" },
+  { value: "LANDSLIDE", label: "Landslide", icon: "" },
+  { value: "STRUCTURAL_COLLAPSE", label: "Collapse", icon: "" },
+  { value: "MEDICAL_EMERGENCY", label: "Medical", icon: "" },
+  { value: "EARTHQUAKE", label: "Earthquake", icon: "" },
+  { value: "CYCLONE", label: "Cyclone", icon: "" },
+  { value: "OTHER", label: "Other", icon: "" },
 ] as const;
 
 type Step = 1 | 2 | 3;
@@ -83,8 +83,8 @@ export default function ReportPage() {
         const ext = photo.name.split(".").pop() ?? "jpg";
         const path = `${crypto.randomUUID()}.${ext}`;
         const { error: upErr } = await supabase.storage
-          .from("incident-photos")
-          .upload(path, photo);
+.from("incident-photos")
+.upload(path, photo);
         if (upErr) throw upErr;
         const { data } = supabase.storage.from("incident-photos").getPublicUrl(path);
         photoUrl = data.publicUrl;
@@ -109,7 +109,7 @@ export default function ReportPage() {
 
       setIncidentNumber(json.incident.incident_number);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not submit report");
+      setError(e instanceof Error ? e.message: "Could not submit report");
     } finally {
       setSubmitting(false);
     }
@@ -135,7 +135,7 @@ export default function ReportPage() {
         <p className="mt-4 text-sm text-muted">
           {signedIn
             ? "Track its status anytime from your dashboard."
-            : "Save this number — you reported as a guest, so show it to any responder to check progress."}
+: "Save this number — you reported as a guest, so show it to any responder to check progress."}
         </p>
         {signedIn ? (
           <Link
@@ -144,7 +144,7 @@ export default function ReportPage() {
           >
             Go to my dashboard
           </Link>
-        ) : (
+        ): (
           <>
             <Link
               href="/register"
@@ -180,7 +180,7 @@ export default function ReportPage() {
           <div
             key={s}
             className={`h-1.5 flex-1 rounded-full ${
-              s <= step ? "bg-[var(--color-primary)]" : "bg-gray-200"
+              s <= step ? "bg-[var(--color-primary)]": "bg-gray-200"
             }`}
           />
         ))}
@@ -202,7 +202,7 @@ export default function ReportPage() {
                 className={`flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border-2 bg-white p-3 shadow-sm transition-all hover:border-gray-300 active:scale-[0.97] ${
                   category === c.value
                     ? "border-[var(--color-primary)]"
-                    : "border-transparent"
+: "border-transparent"
                 }`}
               >
                 <span className="text-3xl">{c.icon}</span>
@@ -255,11 +255,11 @@ export default function ReportPage() {
             />
             {photo ? (
               <span className="text-sm font-medium text-green-600">
-                📷 Photo attached ({photo.name.slice(0, 24)})
+                 Photo attached ({photo.name.slice(0, 24)})
               </span>
-            ) : (
+            ): (
               <span className="text-sm text-muted">
-                📷 Add a photo <span className="text-xs">(optional)</span>
+                 Add a photo <span className="text-xs">(optional)</span>
               </span>
             )}
           </label>
@@ -295,24 +295,24 @@ export default function ReportPage() {
             className={`w-full rounded-xl border-2 p-5 text-left transition-colors ${
               coords
                 ? "border-green-400 bg-green-50"
-                : "border-dashed border-[var(--color-accent)] bg-blue-50/50"
+: "border-dashed border-[var(--color-accent)] bg-blue-50/50"
             }`}
           >
             {locating ? (
-              <span className="text-sm font-medium">📍 Detecting location...</span>
-            ) : coords ? (
+              <span className="text-sm font-medium"> Detecting location...</span>
+            ): coords ? (
               <>
                 <span className="block text-sm font-semibold text-green-700">
-                  📍 Location detected
+                   Location detected
                 </span>
                 <span className="text-xs text-muted">
                   {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
                 </span>
               </>
-            ) : (
+            ): (
               <>
                 <span className="block text-sm font-semibold text-[var(--color-accent)]">
-                  📍 Detect my location
+                   Detect my location
                 </span>
                 <span className="text-xs text-muted">Tap to allow GPS access</span>
               </>
@@ -344,7 +344,7 @@ export default function ReportPage() {
               disabled={submitting || !coords}
               className="inline-flex h-12 flex-[2] items-center justify-center rounded-xl bg-[var(--color-primary)] text-base font-bold text-white transition-all hover:bg-[var(--color-primary-dark)] active:scale-[0.99] disabled:opacity-40"
             >
-              {submitting ? "Sending..." : "🚨 SEND REPORT"}
+              {submitting ? "Sending...": " SEND REPORT"}
             </button>
           </div>
         </section>

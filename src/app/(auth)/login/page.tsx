@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { routeByRole } from "@/lib/roleRouting";
 import { Button } from "@/components/ui/Button";
 import { Input, Label } from "@/components/ui/Input";
+import { Logo } from "@/components/ui/Logo";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -31,9 +32,9 @@ export default function LoginPage() {
       setError(
         error.message.includes("Invalid login credentials")
           ? "Wrong email or password — please try again"
-          : error.message.includes("Email not confirmed")
+: error.message.includes("Email not confirmed")
             ? "Your email isn't confirmed yet — check your inbox for the verification link"
-            : error.message
+: error.message
       );
       setLoading(false);
       return;
@@ -49,9 +50,7 @@ export default function LoginPage() {
       <header className="border-b border-[var(--color-border)] bg-white/85 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
           <Link href="/" className="flex items-center gap-2">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--color-primary)] text-lg shadow-sm">
-              🛟
-            </span>
+            <Logo size={36} />
             <span className="text-sm font-bold tracking-tight">RakshaSetu</span>
           </Link>
           <Link
@@ -93,7 +92,7 @@ export default function LoginPage() {
             <div className="relative">
               <Input
                 id="password"
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? "text": "password"}
                 required
                 autoComplete="current-password"
                 value={password}
@@ -102,10 +101,10 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-label={showPassword ? "Hide password": "Show password"}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted hover:text-foreground"
               >
-                {showPassword ? "Hide" : "Show"}
+                {showPassword ? "Hide": "Show"}
               </button>
             </div>
           </div>
@@ -117,7 +116,7 @@ export default function LoginPage() {
           )}
 
           <Button type="submit" size="lg" disabled={loading} className="w-full">
-            {loading ? "Signing in..." : "Sign In"}
+            {loading ? "Signing in...": "Sign In"}
           </Button>
 
           <p className="text-center text-sm text-muted">
