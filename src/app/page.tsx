@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getSafeUser, getUserRole } from "@/lib/supabase/server";
+import { AreaStatus } from "@/components/weather/AreaStatus";
 import { Logo } from "@/components/ui/Logo";
 
 const ROLE_ROUTES: Record<string, string> = {
@@ -140,6 +141,11 @@ export default async function Home({
               No login needed · takes &lt; 60 seconds
             </span>
           </div>
+        </section>
+
+        {/* Live area status (weather + risk) */}
+        <section className="mx-auto max-w-6xl px-4 pb-10 sm:px-6">
+          <AreaStatus />
         </section>
 
         {/* Persona tiles */}

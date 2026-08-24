@@ -65,7 +65,7 @@ export interface OpsMapProps {
   alerts: Alert[];
   selectedIncidentId: string | null;
   showHeatmap: boolean;
-  layers: { incidents: boolean; resources: boolean; shelters: boolean };
+  layers: { incidents: boolean; resources: boolean; shelters: boolean; radar: boolean };
   onSelectIncident: (id: string) => void;
   onSelectTeam: (id: string) => void;
 }
@@ -118,6 +118,9 @@ export default function OpsMap(props: OpsMapProps) {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+
+      {/* Live precipitation radar (RainViewer, free) */}
+      {props.layers.radar && <RadarLayer />}
 
       {/* Heat approximation: translucent circles weighted by severity */}
       {props.showHeatmap &&
@@ -268,6 +271,75 @@ function FlyTo({
   const incident = incidents.find((i) => i.id === selected);
   if (incident) map.flyTo([incident.latitude, incident.longitude], 14, { duration: 0.6 });
   return null;
+}
+
+// ------------------------------------------------------------
+// Live rain radar: pulls RainViewer's latest past-radar frame and
+// renders it as a semi-transparent tile layer. Free, no API key.
+// NOTE: RainViewer serves tiles only up to zoom level 7 and its
+// frame paths are content hashes now (timestamped paths 410).
+// ------------------------------------------------------------
+function RadarLayer() {
+  const [frame, setFrame] = useState<{ host: string; path: string; time: number } | null>(
+    null
+  );
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    async function load() {
+      try {
+        const res = await fetch("https://api.rainviewer.com/public/weather-maps.json");
+        const json = await res.json();
+        const frames = json?.radar?.past ?? [];
+        const last = frames[frames.length - 1];
+        if (alive && last?.path && json.host) {
+          setFrame({ host: json.host, path: last.path, time: last.time });
+          setFailed(false);
+        } else if (alive) {
+          setFailed(true);
+        }
+      } catch {
+        if (alive) setFailed(true); /* radar is best-effort */
+      }
+    }
+    void load();
+    const t = setInterval(load, 5 * 60 * 1000);
+    return () => {
+      alive = false;
+      clearInterval(t);
+    };
+  }, []);
+
+  // Empty-looking radar usually means "no precipitation over the map
+  // right now", not a bug - the badge makes the live state visible.
+  const badge = frame
+    ? `Rain radar · ${new Date(frame.time * 1000).toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}`
+    : failed
+      ? "Rain radar unavailable"
+      : "Loading radar…";
+
+  return (
+    <>
+      {frame && (
+        <TileLayer
+          key={frame.path}
+          url={`${frame.host}${frame.path}/256/{z}/{x}/{y}/8/1_1.png`}
+          attribution="Radar: RainViewer"
+          opacity={0.6}
+          zIndex={400}
+          maxNativeZoom={7}
+          maxZoom={19}
+        />
+      )}
+      <div className="pointer-events-none absolute bottom-3 left-3 z-[500] rounded-full bg-gray-900/70 px-3 py-1 text-[11px] font-semibold text-white">
+        {badge}
+      </div>
+    </>
+  );
 }
 
 // ------------------------------------------------------------

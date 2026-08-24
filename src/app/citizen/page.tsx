@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useLiveData } from "@/hooks/useLiveData";
+import { AreaStatus } from "@/components/weather/AreaStatus";
 import { SignOutButton } from "@/components/layout/SignOutButton";
 import type { Alert, Incident, Shelter } from "@/types/database";
 import { Logo } from "@/components/ui/Logo";
@@ -100,6 +101,11 @@ export default function CitizenDashboard() {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 pb-16 pt-5 sm:px-6 sm:pt-7">
+        {/* Area status: weather + nearby threats */}
+        <div className="mb-7">
+          <AreaStatus incidents={incidents} shelters={shelters} />
+        </div>
+
         {/* Alerts */}
         {initialLoading ? (
           <Skeleton className="mb-5 h-[72px] rounded-xl" />

@@ -32,6 +32,7 @@ export function OpsConsole() {
     incidents: true,
     resources: true,
     shelters: true,
+    radar: false,
   });
   const [reallocations, setReallocations] = useState<ReallocRec[] | null>(null);
   const [alertsOpen, setAlertsOpen] = useState(false);
@@ -262,6 +263,14 @@ export function OpsConsole() {
               onChange={(e) => setShowHeatmap(e.target.checked)}
             />
              Heatmap
+          </label>
+          <label className="flex cursor-pointer items-center gap-1.5">
+            <input
+              type="checkbox"
+              checked={layers.radar}
+              onChange={(e) => setLayers((l) => ({ ...l, radar: e.target.checked }))}
+            />
+             Rain radar
           </label>
         </div>
 
