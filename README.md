@@ -6,6 +6,8 @@ RakshaSetu is a district-level **decision-support system** for disaster response
 
 **SIH Problem Statement:** PS-05 — Real-Time Disaster Early-Warning & Resource Coordination Platform
 
+> 🗺️ **Demo district:** Rourkela, Odisha (Koel river flood scenario). District-specific data lives in `src/config/city.ts` + `supabase/seed.sql` — edit both to redeploy for any other district.
+
 ---
 
 ## ⚠️ The One-Line Positioning (read this first)
@@ -91,6 +93,8 @@ src/
 │   ├── sms.ts               # "SOS FLOOD ward 12 bridge 5 people" parser
 │   ├── imd.ts               # IMD sync w/ labelled fallback data
 │   ├── simulation.ts        # Scripted disaster scenario engine
+│   ├── auth.ts              # API-route session guards (incl. optional/guest auth)
+│   ├── roleRouting.ts       # post-login routing per role
 │   └── supabase/            # browser/server clients
 ├── app/
 │   ├── api/
@@ -101,12 +105,18 @@ src/
 │   │   ├── classify/        # AI preview endpoint
 │   │   ├── alerts/sync      # IMD pull (15-min cadence)
 │   │   └── simulation       # start / stop / reset
-│   ├── (dashboard)/dashboard/map   # ⭐ Ops console (golden demo)
-│   ├── report/              # citizen 3-step PWA wizard
+│   ├── (dashboard)/dashboard/
+│   │   ├── map/             # ⭐ Ops console (golden demo)
+│   │   ├── incidents/       # incident triage table
+│   │   ├── assignments/     # assignment board + status flow
+│   │   ├── resources/       # fleet & team status management
+│   │   ├── shelters/        # shelter occupancy & stock
+│   │   └── simulation/      # scripted disaster scenario controls
+│   ├── report/              # citizen 3-step PWA wizard (+ anonymous reports)
 │   ├── team/                # field team mission view
 │   └── shelter-manage/      # shelter occupancy view
-supabase/migrations/         # 0001 schema · 0002 storage/policies · 0003 clustering
-supabase/seed.sql            # Chennai flood demo dataset
+supabase/migrations/         # 0001 schema … 0008 policies (full list in setup)
+supabase/seed.sql            # Rourkela flood demo dataset (idempotent)
 ```
 
 ---
@@ -144,7 +154,12 @@ In Supabase Dashboard → **SQL Editor**, run in order:
 1. `supabase/migrations/0001_init.sql` — schema, enums, triggers, RLS, realtime
 2. `supabase/migrations/0002_storage_and_claims.sql` — photo bucket + field-team policies
 3. `supabase/migrations/0003_clustering.sql` — duplicate-report clustering
-4. `supabase/seed.sql` — Chennai demo dataset (6 teams, 3 shelters, 4 incidents, IMD alert)
+4. `supabase/migrations/0004_shelter_claims.sql` — shelter managers claim unmanaged shelters
+5. `supabase/migrations/0005_sync_trigger_security.sql` — trigger security hardening
+6. `supabase/migrations/0006_anonymous_reports.sql` — guest (no-account) emergency reports
+7. `supabase/migrations/0007_official_email_domain.sql` — official roles require a `.gov.in` email
+8. `supabase/migrations/0008_team_self_status.sql` — field teams manage their own duty status
+9. `supabase/seed.sql` — Rourkela demo dataset (6 teams, 3 shelters, 4 incidents, IMD alert)
 
 Then in **Authentication → Providers → Email**: disable **Confirm email** (fastest demo path).
 
@@ -152,10 +167,10 @@ Then in **Authentication → Providers → Email**: disable **Confirm email** (f
 
 | Role | Register as | Lands on |
 |---|---|---|
-| Control room operator | "Control Room Operator" | `/dashboard` |
-| Rescue team member | "Field Rescue Team" | `/team` → claim a team |
-| Shelter staff | "Shelter Manager" | `/shelter-manage` |
-| Citizen | "Citizen" | `/report` |
+| Control room operator | "Control Room Operator" (`.gov.in` email required) | `/dashboard` |
+| Rescue team member | "Field Rescue Team" (`.gov.in` email required) | `/team` → claim a team |
+| Shelter staff | "Shelter Manager" (`.gov.in` email required) | `/shelter-manage` |
+| Citizen | "Citizen" (any email, or report anonymously) | `/report` |
 
 Promote the first operator via SQL Editor:
 
@@ -216,7 +231,7 @@ Open two browser windows side-by-side: **Operator dashboard** + second window (i
 
 **Flow F — Simulation (fully scripted, no manual input)**
 1. Open `/dashboard/simulation` → **▶ Start**
-2. Over 75s: floods appear, a critical rescue spawns, RT-002 breaks down, Adyar shelter fills to 97%, a pregnant-woman evacuation request lands — all streaming to the map
+2. Over 75s: floods appear, a critical rescue spawns, RT-002 breaks down, the Chhend Colony shelter fills to ~97%, a pregnant-woman evacuation request lands — all streaming to the map
 3. Finish your pitch, click **♻ Reset**, repeat forever
 
 **Flow G — SMS fallback (no internet scenario)**
