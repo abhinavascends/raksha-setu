@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createRawClient } from "@supabase/supabase-js";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { jsonError, optionalAuth, requireAuth } from "@/lib/auth";
 import { classifyReport } from "@/lib/classifier";
 import {
@@ -105,17 +105,7 @@ export async function POST(request: NextRequest) {
   const source = (SOURCES.includes(String(body.source)) ? body.source : "APP") as ReportSource;
   const photo_url = typeof body.photo_url === "string" ? body.photo_url : null;
 
-  const supabase = reporterId
-    ? await createClient()
-    : // No usable session: use a clean anon client. The cookie-bound
-      // client may still carry a stale-but-signed token, which Postgres
-      // treats as `authenticated` - and then no insert policy matches
-      // (authenticated requires reporter_id = uid; anon requires null).
-      createRawClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        { auth: { persistSession: false } }
-      );
+  const supabase = createAdminClient();
 
   // ---- Duplicate detection: same type within 500m in last 30 min ----
   const windowStart = new Date(Date.now() - 30 * 60 * 1000).toISOString();
@@ -184,7 +174,7 @@ export async function POST(request: NextRequest) {
     },
   };
 
-  let { data: incident, error } = await supabase
+  const{ data: incident, error } = await supabase
     .from("incidents")
     .insert(payload)
     .select("*")
@@ -193,20 +183,7 @@ export async function POST(request: NextRequest) {
   // Safety net: a stale-but-signed browser token can make Postgres treat
   // the request as `authenticated` even when we have no usable session.
   // Never block the report - retry it as truly anonymous instead.
-  if (error && reporterId) {
-    console.error("[incidents] authenticated insert failed, retrying anon:", error.message);
-    const anon = createRawClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      { auth: { persistSession: false } }
-    );
-    ({ data: incident, error } = await anon
-      .from("incidents")
-      .insert({ ...payload, reporter_id: null })
-      .select("*")
-      .single());
-  }
-
+  
   if (error) {
     console.error("[incidents] insert failed:", error.message);
     return jsonError(error.message, 500);
